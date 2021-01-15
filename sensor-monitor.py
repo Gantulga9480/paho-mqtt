@@ -22,7 +22,7 @@ YELLOW = (255, 255, 0)
 
 WIDTH = 400
 HEIGHT = 400
-VEL = WIDTH / 8
+VEL = int(WIDTH / 8)
 SHAPE = VEL - 1
 pygame.init()
 win = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -46,6 +46,9 @@ def on_connect(client, userdata, level, buf):
 
 
 def on_message(client, userdata, message):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            quit()
     msg = message.payload.decode("utf-8", "ignore")
     msg = msg.replace("[", "")
     msg = msg.replace("]", "")

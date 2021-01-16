@@ -56,7 +56,7 @@ def on_message(client, userdata, message):
     data = np.reshape(np.array(data), (8, 8))
     draw_grid(data)
     pygame.display.flip()
-    clock.tick(60)
+    clock.tick(30)
 
 
 broker = "192.168.1.2"

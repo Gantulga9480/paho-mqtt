@@ -1,7 +1,6 @@
 import paho.mqtt.client as mqtt
 import time
 import os
-import pygame
 import numpy as np
 from tkinter import *
 from tkinter import ttk
@@ -72,6 +71,22 @@ class SensorControl(Tk):
         self.mqtt2 = PahoMqtt(BROKER, "2")
         self.mqtt2.subscribe("sensors/sensor2_status")
         self.mqtt2.loop_start()
+
+        self.mqtt3 = PahoMqtt(BROKER, "3")
+        self.mqtt3.subscribe("sensors/sensor3_status")
+        self.mqtt3.loop_start()
+
+        self.mqtt4 = PahoMqtt(BROKER, "4")
+        self.mqtt4.subscribe("sensors/sensor4_status")
+        self.mqtt4.loop_start()
+
+        self.mqtt5 = PahoMqtt(BROKER, "5")
+        self.mqtt5.subscribe("sensors/sensor5_status")
+        self.mqtt5.loop_start()
+
+        self.mqtt6 = PahoMqtt(BROKER, "6")
+        self.mqtt6.subscribe("sensors/sensor6_status")
+        self.mqtt6.loop_start()
 
         self.title("Control")
         self.resizable(True, True)
@@ -176,11 +191,11 @@ class SensorControl(Tk):
         # check sensors
         self.check_sensor_1()
         self.check_sensor_2()
-        # self.check_sensor_3()
-        # self.check_sensor_4()
-        # self.check_sensor_5()
-        # self.check_sensor_6()
-
+        self.check_sensor_3()
+        self.check_sensor_4()
+        self.check_sensor_5()
+        self.check_sensor_6()
+        
         self.mainloop()
 
     def check_sensor_1(self):
@@ -191,6 +206,7 @@ class SensorControl(Tk):
                 self.label_sensor_1["foreground"] = 'blue'
             elif self.mqtt1.msg == "d":
                 self.label_sensor_1["foreground"] = 'red'
+        self.mqtt1.msg = None
         self.after(10, self.check_sensor_1)
 
     def check_sensor_2(self):
@@ -201,6 +217,7 @@ class SensorControl(Tk):
                 self.label_sensor_2["foreground"] = 'blue'
             elif self.mqtt2.msg == "d":
                 self.label_sensor_2["foreground"] = 'red'
+        self.mqtt2.msg = None
         self.after(10, self.check_sensor_2)
 
     def check_sensor_3(self):
@@ -211,6 +228,7 @@ class SensorControl(Tk):
                 self.label_sensor_3["foreground"] = 'blue'
             elif self.mqtt3.msg == "d":
                 self.label_sensor_3["foreground"] = 'red'
+        self.mqtt3.msg = None
         self.after(10, self.check_sensor_3)
 
     def check_sensor_4(self):
@@ -221,6 +239,7 @@ class SensorControl(Tk):
                 self.label_sensor_4["foreground"] = 'blue'
             elif self.mqtt4.msg == "d":
                 self.label_sensor_4["foreground"] = 'red'
+        self.mqtt4.msg = None
         self.after(10, self.check_sensor_4)
 
     def check_sensor_5(self):
@@ -231,6 +250,7 @@ class SensorControl(Tk):
                 self.label_sensor_5["foreground"] = 'blue'
             elif self.mqtt5.msg == "d":
                 self.label_sensor_5["foreground"] = 'red'
+        self.mqtt5.msg = None
         self.after(10, self.check_sensor_5)
 
     def check_sensor_6(self):
@@ -241,6 +261,7 @@ class SensorControl(Tk):
                 self.label_sensor_6["foreground"] = 'blue'
             elif self.mqtt6.msg == "d":
                 self.label_sensor_6["foreground"] = 'red'
+        self.mqtt6.msg = None
         self.after(10, self.check_sensor_6)
 
     def start(self):

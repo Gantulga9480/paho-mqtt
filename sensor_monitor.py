@@ -2,7 +2,6 @@ import paho.mqtt.client as mqtt
 import time
 import argparse
 import numpy as np
-import cv2
 import pygame
 
 parser = argparse.ArgumentParser()
@@ -10,7 +9,7 @@ parser.add_argument("-s", "--sensor", type=int)
 args = parser.parse_args()
 
 SENSOR_MAX = 80
-SENSOR_MIN = -20
+SENSOR_MIN = 0
 SENSOR = args.sensor
 
 BLACK = (0, 0, 0)
@@ -34,8 +33,8 @@ def draw_grid(data):
     for i in range(8):
         for j in range(8):
             num = float(data[i][j])
-            color = int((num-SENSOR_MIN)/(SENSOR_MAX-SENSOR_MIN)*255)
-            pygame.draw.rect(win, (color, color, 255 - color),
+            color = int(np.floor((num-SENSOR_MIN)/(SENSOR_MAX-SENSOR_MIN)*255))
+            pygame.draw.rect(win, (color, 0, 255 - color),
                              (VEL*j, VEL*i, SHAPE, SHAPE))
             score = font.render(f"{num}", 1, WHITE)
             win.blit(score, (VEL*j, VEL*i))
@@ -56,16 +55,12 @@ def on_message(client, userdata, message):
     data = np.reshape(np.array(data), (8, 8))
     draw_grid(data)
     pygame.display.flip()
-    clock.tick(30)
-
 
 broker = "192.168.1.2"
 client = mqtt.Client(f"sensor{SENSOR}_read")
 client.on_connect = on_connect
 client.on_message = on_message
 client.connect(broker)
-time.sleep(0.1)
 pygame.display.set_caption(f"Sensor {SENSOR}")
-client.subscribe(f"sensors/sensor{SENSOR}_data", 2)
+client.subscribe(f"sensors/sensor{SENSOR}/data", 2)
 client.loop_forever()
-time.sleep(0.1)

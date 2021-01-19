@@ -1,24 +1,24 @@
-"""
-All paths added to app/utils.py
-All commands added to app/utils.py
-All clients added to app/utils.py
-All activities added to app/utils.py
-"""
+"""git -> Gantulga9480"""
 
 import time
 import os
 import numpy as np
 import csv
+import cv2
 from pathlib import Path
 from datetime import datetime as dt
+from shutil import copyfile
+
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox 
-import app.user_info as ui
+
+from app.user_info import UserInfo
 from app.pop_up import PopUp
 from app.paho_mqtt import PahoMqtt
 from app.data_stream import Stream
 from app.utils import *
+from app.kinect import Kinect
 
 
 class SensorControl(Tk):
@@ -34,79 +34,32 @@ class SensorControl(Tk):
         self.height = "User"
         self.weight = "User"
         self.is_streaming = False
-        self.stream_data = []
-        self.stream = None
-        self.options = ACTIVITIES
-        self.activity = StringVar()
-        self.save_path = ""
         self.is_write = True
-
-        print(self.options)
+        self.stream_data = []
+        self.stream_video = []
+        self.stream_depth = []
+        self.clients = []
+        self.stream = None
+        self.save_path = ""
+        self.activity = StringVar()
+        self.ignore = BooleanVar()
+        self.k1 = Kinect(id=1)
+        # self.k2 = Kinect(id=2)
+        self.frame_size = (640, 480)
+        
 
         # Clients
-        self.mqtt = PahoMqtt(BROKER, "master")
-        self.mqtt.loop_start()
-
-        self.mqtt1 = PahoMqtt(BROKER, "s1")
-        self.mqtt1.subscribe(CLEINT_1)
-        self.mqtt1.loop_start()
-
-        self.mqtt2 = PahoMqtt(BROKER, "s2")
-        self.mqtt2.subscribe(CLEINT_2)
-        self.mqtt2.loop_start()
-
-        self.mqtt3 = PahoMqtt(BROKER, "s3")
-        self.mqtt3.subscribe(CLEINT_3)
-        self.mqtt3.loop_start()
-
-        self.mqtt4 = PahoMqtt(BROKER, "s4")
-        self.mqtt4.subscribe(CLEINT_4)
-        self.mqtt4.loop_start()
-
-        self.mqtt5 = PahoMqtt(BROKER, "s5")
-        self.mqtt5.subscribe(CLEINT_5)
-        self.mqtt5.loop_start()
-
-        self.mqtt6 = PahoMqtt(BROKER, "s6")
-        self.mqtt6.subscribe(CLEINT_6)
-        self.mqtt6.loop_start()
-
-        self.mqttd1 = PahoMqtt(BROKER, "d1")
-        self.mqttd1.subscribe(SENSOR_1)
-        self.mqttd1.loop_start()
-
-        self.mqttd2 = PahoMqtt(BROKER, "d2")
-        self.mqttd2.subscribe(SENSOR_2)
-        self.mqttd2.loop_start()
-
-        self.mqttd3 = PahoMqtt(BROKER, "d3")
-        self.mqttd3.subscribe(SENSOR_3)
-        self.mqttd3.loop_start()
-
-        self.mqttd4 = PahoMqtt(BROKER, "d4")
-        self.mqttd4.subscribe(SENSOR_4)
-        self.mqttd4.loop_start()
-
-        self.mqttd5 = PahoMqtt(BROKER, "d5")
-        self.mqttd5.subscribe(SENSOR_5)
-        self.mqttd5.loop_start()
-
-        self.mqttd6 = PahoMqtt(BROKER, "d6")
-        self.mqttd6.subscribe(SENSOR_6)
-        self.mqttd6.loop_start()
+        for i in range(len(SENSORS)):
+            self.clients.append(PahoMqtt(BROKER, f"sensor-{i}",
+                                         c_msg=SENSORS[i]))
+            self.clients[i].subscribe(SENSORS[i])
+            self.clients[i].loop_start()
 
         # Tk widgets
         self.title("Control")
         self.resizable(0,0)
         self.configure(bg='white')
-
-        s = ttk.Style()
-        s.configure("Red.TLabel", foreground='red')
-        s.configure("Green.TLabel", foreground='green')
-        s.configure("Black.TLabel", foreground='black')
-        s.configure("Yellow.TLabel", foreground='yellow')
-        s.configure('White.TLabelFrame', background='white')
-
+        
         # Sensor Frame 1
         self.sensor_frame1 = LabelFrame(self, text="Sensor control",
                                         background='white')
@@ -152,12 +105,9 @@ class SensorControl(Tk):
                                     font=("default", 15, 'bold'))
         self.label_sensor_8.grid(row=7, column=0, columnspan=2)
         self.start_btn = ttk.Button(self.sensor_frame1,
-                                    text="Start", command=self.sensor_start)
+                                    text="Refresh", command=self.refresh)
         self.start_btn.grid(row=8, column=0)
-        self.stop_btn = ttk.Button(self.sensor_frame1,
-                                   text="Stop", command=self.sensor_stop)
-        self.stop_btn.grid(row=8, column=1)
-
+        
         # Stream Frame 2
         self.sensor_frame2 = LabelFrame(self, text="Data control",
                                         background='white')
@@ -196,7 +146,7 @@ class SensorControl(Tk):
         self.weight_label.grid(row=3, column=1)
 
         self.activity_menu = ttk.Combobox(self.sensor_frame2,
-                                          value=self.options,
+                                          value=ACTIVITIES,
                                           textvariable=self.activity)
         self.activity_menu.current(0)
         self.activity_menu.config(state="readonly", width=10)
@@ -229,41 +179,40 @@ class SensorControl(Tk):
         menubar = Menu(self)
         tool = Menu(menubar, tearoff=0)
         tool.add_command(label="Insert user info", command=self.user_info)
-        tool.add_separator()
-        tool.add_command(label="Disconnect sensors", command=self.sensor_close)
+        tool.add_checkbutton(label="Ignore sensor error",
+                             onvalue=1, offvalue=0, variable=self.ignore)
         menubar.add_cascade(label="Tools", menu=tool)
         self.config(menu=menubar)
 
-        # Check sensors
-        self.check_sensor_1()
-        self.check_sensor_2()
-        self.check_sensor_3()
-        self.check_sensor_4()
-        self.check_sensor_5()
-        self.check_sensor_6()
-
+        
         self.save_data()
+        self.save_video()
+        self.set_state()
+        self.refresh()
         
         # Main loop
-        # Code lines after this function wont run
         self.mainloop()
-
-    def sensor_start(self):
-        self.mqtt.publish(PC_SENSOR_CONTROL, START_COMMAND, qos=0)
-
-    def sensor_stop(self):
-        self.mqtt.publish(PC_SENSOR_CONTROL, WAIT_COMMAND, qos=0)
-
-    def sensor_close(self):
-        self.mqtt.publish(PC_SENSOR_CONTROL, STOP_COMMAND, qos=0)
+        # Don't code after this line of code
 
     def stream_start(self):
         self.stream_stop_btn['state'] = NORMAL
         self.stream_start_btn['state'] = DISABLED
         self.stream_reset_btn['state'] = NORMAL
-        self.stream = Stream(clients=[self.mqttd2])
+        self.k1.is_streaming = True
+        self.stream = Stream(clients=self.clients, ignore=self.ignore.get())
+        crnt_time = dt.today().strftime(FILEFORMAT)
+        os.makedirs(f"data_by_activity/{self.activity.get()}/{crnt_time}")
+        os.makedirs(f"data_by_time/{crnt_time}")
         self.save_path = \
-            f"data/{self.activity.get()}/{dt.today().strftime(FILEFORMAT)}.csv"
+            f"data_by_activity/{self.activity.get()}/{crnt_time}/{crnt_time}"
+        self.copy_path = \
+            f"data_by_time/{crnt_time}/{crnt_time}"
+        self.rgb_out = cv2.VideoWriter(f"{self.save_path}_rgb.avi",
+                                   cv2.VideoWriter_fourcc(*'DIVX'),
+                                   30, self.frame_size)
+        self.depth_out = cv2.VideoWriter(f"{self.save_path}_depth.avi",
+                                   cv2.VideoWriter_fourcc(*'DIVX'),
+                                   30, self.frame_size)
         if Path(self.save_path).is_file():
             is_write = messagebox.askyesno("Stream save",
                                             FILE_FOUND_MSG)
@@ -287,36 +236,81 @@ class SensorControl(Tk):
         else:
             pass
         self.is_streaming = False
+        self.k1.is_streaming = False
+        del(self.stream)
 
     def stream_save(self):
         self.stream_save_btn['state'] = DISABLED
         self.stream_reset_btn['state'] = DISABLED
         if len(self.stream_data) > 0:
-            self.file_data = open(self.save_path, "w+", newline ='')
+            self.stream_data[1][2] = f"{self.activity.get()}-start"
+            self.stream_data[-1][2] = f"{self.activity.get()}-end"
+            self.file_data = open(f"{self.save_path}.csv", "w+", newline ='')
             writer = csv.writer(self.file_data)
             with self.file_data:
                 for row in self.stream_data:
                     writer.writerow(row)
+            for i in range(len(self.stream_video)):
+                self.rgb_out.write(self.stream_video[i])
+            for i in range(len(self.stream_depth)):
+                self.depth_out.write(self.stream_depth[i])
+            self.rgb_out.release()
+            self.depth_out.release()
+            copyfile(f"{self.save_path}.csv",
+                     f"{self.copy_path}.csv")
+            copyfile(f"{self.save_path}_rgb.avi",
+                     f"{self.copy_path}_rgb.avi")
+            copyfile(f"{self.save_path}_depth.avi",
+                     f"{self.copy_path}_depth.avi")
         else:
             messagebox.showinfo("Stream save", "No Data to save!")
+        print("left in depth_buffer", len(self.k1.depth_buffer))
+        print("left in rgb_buffer", len(self.k1.rgb_buffer))
         self.stream_data.clear()
-
-    def save_data(self):
-        if self.is_streaming:
-            data = self.stream.get_data()
-            print(data)
-            self.stream_data.append([dt.now(),
-                                     data,
-                                     self.activity.get()])
-        self.after(SPEED, self.save_data)
+        self.stream_video.clear()
+        self.stream_depth.clear()
+        self.k1.depth_buffer.clear()
+        self.k1.rgb_buffer.clear()
 
     def stream_reset(self):
         self.stream_reset_btn['state'] = DISABLED
         self.stream_save_btn['state'] = DISABLED
+        self.stream_stop_btn['state'] = DISABLED
+        self.stream_start_btn['state'] = NORMAL
         self.stream_data.clear()
+        self.stream_video.clear()
+        self.stream_depth.clear()
+        self.k1.depth_buffer.clear()
+        self.k1.rgb_buffer.clear()
+        for i in range(len(SENSORS)):
+            self.clients[i].msg = None
+
+    def save_data(self):
+        if self.is_streaming:
+            try:
+                data = self.stream.get_data()
+                self.stream_data.append([dt.now(),
+                                        data,
+                                        0])
+            except:
+                messagebox.showwarning("Nothing to read", SENSOR_DATA_ERROR)
+                self.is_streaming = False
+                self.stream_reset()
+        self.after(DATA_SPEED, self.save_data)
+
+    def save_video(self):
+        if self.is_streaming:
+            if len(self.k1.depth_buffer) > 0 and len(self.k1.rgb_buffer) > 0:
+                depth = self.k1.depth_buffer[0]
+                video = self.k1.rgb_buffer[0]
+                self.k1.depth_buffer.pop(0)
+                self.k1.rgb_buffer.pop(0)
+                self.stream_video.append(video)
+                self.stream_depth.append(depth)
+        self.after(VIDEO_SPEED, self.save_video)
 
     def user_info(self):
-        user = ui.UserInfo(self)
+        user = UserInfo(self)
         self.wait_window(user.win)
         self.age = user.age
         self.sex = user.sex
@@ -326,72 +320,52 @@ class SensorControl(Tk):
         self.sex_label['text'] = user.sex
         self.height_label['text'] = user.height
         self.weight_label['text'] = user.weight
+        del(user)
 
-    def check_sensor_1(self):
-        if self.mqtt1.msg is not None:
-            if self.mqtt1.msg == "c":
-                self.label_sensor_1["foreground"] = 'green'
-            elif self.mqtt1.msg == "w":
-                self.label_sensor_1["foreground"] = 'blue'
-            elif self.mqtt1.msg == "d":
-                self.label_sensor_1["foreground"] = 'red'
-        self.mqtt1.msg = None
-        self.after(10, self.check_sensor_1)
+    def refresh(self):
+        if self.clients[0].is_streaming:
+            self.label_sensor_1["foreground"] = 'green'
+        else:
+            self.label_sensor_1["foreground"] = 'red'
+        if self.clients[1].is_streaming:
+            self.label_sensor_2["foreground"] = 'green'
+        else:
+            self.label_sensor_2["foreground"] = 'red'
+        if self.clients[2].is_streaming:
+            self.label_sensor_3["foreground"] = 'green'
+        else:
+            self.label_sensor_3["foreground"] = 'red'
+        if self.clients[3].is_streaming:
+            self.label_sensor_4["foreground"] = 'green'
+        else:
+            self.label_sensor_4["foreground"] = 'red'
+        if self.clients[4].is_streaming:
+            self.label_sensor_5["foreground"] = 'green'
+        else:
+            self.label_sensor_5["foreground"] = 'red'
+        if self.clients[5].is_streaming:
+            self.label_sensor_6["foreground"] = 'green'
+        else:
+            self.label_sensor_6["foreground"] = 'red'
+        if self.k1.k1_depth_ready:
+            self.label_sensor_7["foreground"] = 'green'
+        else:
+            self.label_sensor_7["foreground"] = 'red'
+        """
+        if self.k2.k2_depth_ready:
+            self.label_sensor_8["foreground"] = 'green'
+        else:
+            self.label_sensor_8["foreground"] = 'red'
+        """
+        self.after(2333, self.refresh)
 
-    def check_sensor_2(self):
-        if self.mqtt2.msg is not None:
-            if self.mqtt2.msg == "c":
-                self.label_sensor_2["foreground"] = 'green'
-            elif self.mqtt2.msg == "w":
-                self.label_sensor_2["foreground"] = 'blue'
-            elif self.mqtt2.msg == "d":
-                self.label_sensor_2["foreground"] = 'red'
-        self.mqtt2.msg = None
-        self.after(10, self.check_sensor_2)
-
-    def check_sensor_3(self):
-        if self.mqtt3.msg is not None:
-            if self.mqtt3.msg == "c":
-                self.label_sensor_3["foreground"] = 'green'
-            elif self.mqtt3.msg == "w":
-                self.label_sensor_3["foreground"] = 'blue'
-            elif self.mqtt3.msg == "d":
-                self.label_sensor_3["foreground"] = 'red'
-        self.mqtt3.msg = None
-        self.after(10, self.check_sensor_3)
-
-    def check_sensor_4(self):
-        if self.mqtt4.msg is not None:
-            if self.mqtt4.msg == "c":
-                self.label_sensor_4["foreground"] = 'green'
-            elif self.mqtt4.msg == "w":
-                self.label_sensor_4["foreground"] = 'blue'
-            elif self.mqtt4.msg == "d":
-                self.label_sensor_4["foreground"] = 'red'
-        self.mqtt4.msg = None
-        self.after(10, self.check_sensor_4)
-
-    def check_sensor_5(self):
-        if self.mqtt5.msg is not None:
-            if self.mqtt5.msg == "c":
-                self.label_sensor_5["foreground"] = 'green'
-            elif self.mqtt5.msg == "w":
-                self.label_sensor_5["foreground"] = 'blue'
-            elif self.mqtt5.msg == "d":
-                self.label_sensor_5["foreground"] = 'red'
-        self.mqtt5.msg = None
-        self.after(10, self.check_sensor_5)
-
-    def check_sensor_6(self):
-        if self.mqtt6.msg is not None:
-            if self.mqtt6.msg == "c":
-                self.label_sensor_6["foreground"] = 'green'
-            elif self.mqtt6.msg == "w":
-                self.label_sensor_6["foreground"] = 'blue'
-            elif self.mqtt6.msg == "d":
-                self.label_sensor_6["foreground"] = 'red'
-        self.mqtt6.msg = None
-        self.after(10, self.check_sensor_6)
-
+    def set_state(self):
+        self.clients[0].is_streaming = False
+        self.clients[1].is_streaming = False
+        self.clients[2].is_streaming = False
+        self.clients[3].is_streaming = False
+        self.clients[4].is_streaming = False
+        self.clients[5].is_streaming = False
+        self.after(1000, self.set_state)
 
 SensorControl()

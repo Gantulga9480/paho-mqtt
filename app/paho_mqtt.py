@@ -3,29 +3,42 @@ import paho.mqtt.client as mqtt
 
 class PahoMqtt:
 
-    def __init__(self, broker, info, port=1883):
+    def __init__(self, broker, info, port=1883,
+                 raw_msg=False, c_msg=None, d_msg=None):
         self.__broker = broker
         self.__port = port
         self.msg = None
+        self.is_streaming = False
+        self.c_msg = c_msg
+        self.d_msg = d_msg
         self.__client = mqtt.Client(f"sensor_control_{info}")
+        if not raw_msg:
+            self.__client.on_message = self.__on_message
+        else:
+            self.__client.on_message = self.__on_message_raw
         self.__client.on_connect = self.__on_connect
-        self.__client.on_message = self.__on_message
         self.__client.on_publish = self.__on_publish
         self.__client.on_disconnect = self.__on_disconnect
         self.__client.wait_for_publish = self.__wait_for_publish
         self.__client.connect(self.__broker, self.__port)
 
     def __on_connect(self, client, userdata, level, buf):
-        print("client connected")
+        print(f"{self.c_msg} connected")
 
     def __on_message(self, client, userdata, message):
+        self.is_streaming = True
         self.msg = message.payload.decode("utf-8", "ignore")
 
+    def __on_message_raw(self, client, userdata, message):
+        self.is_streaming = True
+        self.msg = message.payload
+
     def __on_publish(self, client, userdata, result):
-        print("command sent")
+        pass
 
     def __on_disconnect(self, client, userdata, rc):
-        print("client disconnected")
+        self.is_streaming = False
+        print(f"{self.d_msg} disconnected")
 
     def __wait_for_publish(self):
         pass
@@ -33,10 +46,10 @@ class PahoMqtt:
     def disconnect(self):
         self.__client.disconnect()
 
-    def publish(self, topic, msg, qos=2):
+    def publish(self, topic, msg, qos=0):
         self.__client.publish(topic, payload=msg, qos=qos)
 
-    def subscribe(self, topic, qos=2):
+    def subscribe(self, topic, qos=0):
         self.__client.subscribe(topic, qos=qos)
 
     def loop_start(self):

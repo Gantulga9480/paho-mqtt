@@ -13,7 +13,7 @@ class UserInfo(Tk):
         self.__selected = StringVar()
         self.master = master
         self.win = Toplevel(self.master)
-        self.win.attributes("-toolwindow", 1)
+        self.win.attributes("-alpha", 1)
         self.win.resizable(0, 0)
 
         # Name

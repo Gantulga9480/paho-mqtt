@@ -23,6 +23,7 @@ class Stream:
             else:
                 if not self.ignore:
                     print("Please check sensor", index+1,)
+                    print("Or use 'ignore sensor error' option in Tools menu ")
                     raise Exception
                 else:
                     pass

@@ -357,15 +357,11 @@ class SensorControl(Tk):
         else:
             self.label_sensor_8["foreground"] = 'red'
         """
-        self.after(2333, self.refresh)
+        self.after(3333, self.refresh)
 
     def set_state(self):
-        self.clients[0].is_streaming = False
-        self.clients[1].is_streaming = False
-        self.clients[2].is_streaming = False
-        self.clients[3].is_streaming = False
-        self.clients[4].is_streaming = False
-        self.clients[5].is_streaming = False
-        self.after(1000, self.set_state)
+        for i in range(6):
+            self.clients[i].is_streaming = False
+        self.after(1003, self.set_state)
 
 SensorControl()

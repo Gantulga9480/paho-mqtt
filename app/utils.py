@@ -1,6 +1,6 @@
 # One and only broker
-# BROKER = "192.168.1.60"
-BROKER = "127.0.0.1"
+BROKER = "192.168.0.100"
+# BROKER = "127.0.0.1"
 
 # Topic list
 SENSORS = ["sensors/sensor1/data",
@@ -18,7 +18,7 @@ SENSORS = ["sensors/sensor1/data",
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-DATA_SPEED = 100 # ms
+DATA_SPEED = 200 # ms
 VIDEO_SPEED = 33 # ms
 FILEFORMAT = "%Y_%m_%d_%H_%M_%S"
 

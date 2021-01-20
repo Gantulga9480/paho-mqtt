@@ -149,31 +149,49 @@ class SensorControl(Tk):
                                           value=ACTIVITIES,
                                           textvariable=self.activity)
         self.activity_menu.current(0)
-        self.activity_menu.config(state="readonly", width=10)
+        self.activity_menu.config(state="readonly", width=15)
         self.activity_menu.bind("<<ComboboxSelected>>")
-        self.activity_menu.grid(row=4, column=0, columnspan=2)
+        self.activity_menu.grid(row=4, column=0, columnspan=2, pady=5)
 
         self.stream_start_btn = ttk.Button(self.sensor_frame2,
                                            text="Steam start",
-                                           command=self.stream_start)
-        self.stream_start_btn.grid(row=5, column=0)
+                                           command=self.stream_start,
+                                           width=11)
+        self.stream_start_btn.grid(row=5, column=0, padx=2, pady=2)
         self.stream_stop_btn = ttk.Button(self.sensor_frame2,
                                           text="Steam stop",
-                                          command=self.stream_stop)
+                                          command=self.stream_stop,
+                                          width=11)
         self.stream_stop_btn["state"] = DISABLED
-        self.stream_stop_btn.grid(row=5, column=1)
+        self.stream_stop_btn.grid(row=5, column=1, padx=2, pady=2)
 
         self.stream_reset_btn = ttk.Button(self.sensor_frame2,
                                            text="Stream reset",
-                                           command=self.stream_reset)
+                                           command=self.stream_reset,
+                                           width=11)
         self.stream_reset_btn["state"] = DISABLED
-        self.stream_reset_btn.grid(row=6, column=1)
+        self.stream_reset_btn.grid(row=7, column=1, padx=2, pady=2)
 
         self.stream_save_btn = ttk.Button(self.sensor_frame2,
                                           text="Stream save",
-                                          command=self.stream_save)
+                                          command=self.stream_save,
+                                          width=11)
         self.stream_save_btn["state"] = DISABLED
-        self.stream_save_btn.grid(row=6, column=0)
+        self.stream_save_btn.grid(row=7, column=0, padx=2, pady=2)
+
+        self.act_start_btn = ttk.Button(self.sensor_frame2,
+                                        text="Activity start",
+                                        command=self.stream_save,
+                                        width=11)
+        self.act_start_btn["state"] = DISABLED
+        self.act_start_btn.grid(row=6, column=0, padx=2, pady=5)
+
+        self.act_end_btn = ttk.Button(self.sensor_frame2,
+                                      text="Activity end",
+                                      command=self.stream_save,
+                                      width=11)
+        self.act_end_btn["state"] = DISABLED
+        self.act_end_btn.grid(row=6, column=1, padx=2, pady=5)
 
         # Menu
         menubar = Menu(self)

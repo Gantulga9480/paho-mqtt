@@ -18,7 +18,7 @@ class Stream:
                     msg = msg.split(",")
                     msg = [float(i) for i in msg]
                     data.append(msg)
-                except:
+                except Exception:
                     pass
             else:
                 if not self.ignore:

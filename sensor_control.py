@@ -11,14 +11,14 @@ from shutil import copyfile
 
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox 
+from tkinter import messagebox
 
 from app.user_info import UserInfo
 from app.pop_up import PopUp
 from app.paho_mqtt import PahoMqtt
 from app.data_stream import Stream
-from app.utils import *
 from app.kinect import Kinect
+from app.utils import *
 
 
 class SensorControl(Tk):
@@ -33,6 +33,7 @@ class SensorControl(Tk):
         self.sex = "User"
         self.height = "User"
         self.weight = "User"
+
         self.is_streaming = False
         self.is_write = True
         self.stream_data = []
@@ -46,7 +47,6 @@ class SensorControl(Tk):
         self.k1 = Kinect(id=1)
         # self.k2 = Kinect(id=2)
         self.frame_size = (640, 480)
-        
 
         # Clients
         for i in range(len(SENSORS)):
@@ -57,9 +57,9 @@ class SensorControl(Tk):
 
         # Tk widgets
         self.title("Control")
-        self.resizable(0,0)
+        self.resizable(0, 0)
         self.configure(bg='white')
-        
+
         # Sensor Frame 1
         self.sensor_frame1 = LabelFrame(self, text="Sensor control",
                                         background='white')
@@ -107,42 +107,42 @@ class SensorControl(Tk):
         self.start_btn = ttk.Button(self.sensor_frame1,
                                     text="Refresh", command=self.refresh)
         self.start_btn.grid(row=8, column=0)
-        
+
         # Stream Frame 2
         self.sensor_frame2 = LabelFrame(self, text="Data control",
                                         background='white')
         self.sensor_frame2.pack(side=LEFT, fill="y")
         self.user_age = Label(self.sensor_frame2, text="Age",
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                              background='white',
+                              font=("default", 10, 'bold'))
         self.user_age.grid(row=0, column=0)
         self.age_label = Label(self.sensor_frame2, text=self.age,
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                               background='white',
+                               font=("default", 10, 'bold'))
         self.age_label.grid(row=0, column=1)
         self.user_sex = Label(self.sensor_frame2, text="Sex",
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                              background='white',
+                              font=("default", 10, 'bold'))
         self.user_sex.grid(row=1, column=0)
         self.sex_label = Label(self.sensor_frame2, text=self.sex,
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                               background='white',
+                               font=("default", 10, 'bold'))
         self.sex_label.grid(row=1, column=1)
         self.user_height = Label(self.sensor_frame2, text="Height",
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                                 background='white',
+                                 font=("default", 10, 'bold'))
         self.user_height.grid(row=2, column=0)
         self.height_label = Label(self.sensor_frame2, text=self.height,
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                                  background='white',
+                                  font=("default", 10, 'bold'))
         self.height_label.grid(row=2, column=1)
         self.user_weight = Label(self.sensor_frame2, text="Weight",
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                                 background='white',
+                                 font=("default", 10, 'bold'))
         self.user_weight.grid(row=3, column=0)
         self.weight_label = Label(self.sensor_frame2, text=self.weight,
-                                    background='white',
-                                    font=("default", 10, 'bold'))
+                                  background='white',
+                                  font=("default", 10, 'bold'))
         self.weight_label.grid(row=3, column=1)
 
         self.activity_menu = ttk.Combobox(self.sensor_frame2,
@@ -152,26 +152,26 @@ class SensorControl(Tk):
         self.activity_menu.config(state="readonly", width=10)
         self.activity_menu.bind("<<ComboboxSelected>>")
         self.activity_menu.grid(row=4, column=0, columnspan=2)
-        
+
         self.stream_start_btn = ttk.Button(self.sensor_frame2,
-                                                text="Steam start",
-                                                command=self.stream_start)
+                                           text="Steam start",
+                                           command=self.stream_start)
         self.stream_start_btn.grid(row=5, column=0)
         self.stream_stop_btn = ttk.Button(self.sensor_frame2,
-                                               text="Steam stop",
-                                               command=self.stream_stop)
+                                          text="Steam stop",
+                                          command=self.stream_stop)
         self.stream_stop_btn["state"] = DISABLED
         self.stream_stop_btn.grid(row=5, column=1)
 
         self.stream_reset_btn = ttk.Button(self.sensor_frame2,
-                                               text="Stream reset",
-                                               command=self.stream_reset)
+                                           text="Stream reset",
+                                           command=self.stream_reset)
         self.stream_reset_btn["state"] = DISABLED
         self.stream_reset_btn.grid(row=6, column=1)
 
         self.stream_save_btn = ttk.Button(self.sensor_frame2,
-                                               text="Stream save",
-                                               command=self.stream_save)
+                                          text="Stream save",
+                                          command=self.stream_save)
         self.stream_save_btn["state"] = DISABLED
         self.stream_save_btn.grid(row=6, column=0)
 
@@ -184,44 +184,37 @@ class SensorControl(Tk):
         menubar.add_cascade(label="Tools", menu=tool)
         self.config(menu=menubar)
 
-        
         self.save_data()
         self.save_video()
         self.set_state()
         self.refresh()
-        
+
         # Main loop
         self.mainloop()
-        # Don't code after this line of code
+        # Do not write code after main loop
 
     def stream_start(self):
         self.stream_stop_btn['state'] = NORMAL
         self.stream_start_btn['state'] = DISABLED
         self.stream_reset_btn['state'] = NORMAL
-        self.k1.is_streaming = True
         self.stream = Stream(clients=self.clients, ignore=self.ignore.get())
-        crnt_time = dt.today().strftime(FILEFORMAT)
-        os.makedirs(f"data_by_activity/{self.activity.get()}/{crnt_time}")
-        os.makedirs(f"data_by_time/{crnt_time}")
+        self.crnt_time = dt.today().strftime(FILEFORMAT)
         self.save_path = \
-            f"data_by_activity/{self.activity.get()}/{crnt_time}/{crnt_time}"
+            f"data_by_activity/{self.activity.get()}/{self.crnt_time}/{self.crnt_time}"
         self.copy_path = \
-            f"data_by_time/{crnt_time}/{crnt_time}"
-        self.rgb_out = cv2.VideoWriter(f"{self.save_path}_rgb.avi",
-                                   cv2.VideoWriter_fourcc(*'DIVX'),
-                                   30, self.frame_size)
-        self.depth_out = cv2.VideoWriter(f"{self.save_path}_depth.avi",
-                                   cv2.VideoWriter_fourcc(*'DIVX'),
-                                   30, self.frame_size)
-        if Path(self.save_path).is_file():
+            f"data_by_time/{self.crnt_time}/{self.crnt_time}"
+
+        if Path(f"{self.save_path}.csv").is_file():
             is_write = messagebox.askyesno("Stream save",
-                                            FILE_FOUND_MSG)
+                                           FILE_FOUND_MSG)
             if is_write:
                 self.is_streaming = True
+                self.k1.is_streaming = True
             else:
                 pass
         else:
             self.is_streaming = True
+            self.k1.is_streaming = True
         if self.is_streaming:
             if len(self.stream_data) == 0:
                 self.stream_data.append([self.age, self.sex,
@@ -245,7 +238,15 @@ class SensorControl(Tk):
         if len(self.stream_data) > 0:
             self.stream_data[1][2] = f"{self.activity.get()}-start"
             self.stream_data[-1][2] = f"{self.activity.get()}-end"
-            self.file_data = open(f"{self.save_path}.csv", "w+", newline ='')
+            os.makedirs(f"data_by_activity/{self.activity.get()}/{self.crnt_time}")
+            os.makedirs(f"data_by_time/{self.crnt_time}")
+            self.rgb_out = cv2.VideoWriter(f"{self.save_path}_rgb.avi",
+                                           cv2.VideoWriter_fourcc(*'DIVX'),
+                                           30, self.frame_size)
+            self.depth_out = cv2.VideoWriter(f"{self.save_path}_depth.avi",
+                                             cv2.VideoWriter_fourcc(*'DIVX'),
+                                             30, self.frame_size)
+            self.file_data = open(f"{self.save_path}.csv", "w+", newline='')
             writer = csv.writer(self.file_data)
             with self.file_data:
                 for row in self.stream_data:
@@ -290,16 +291,17 @@ class SensorControl(Tk):
             try:
                 data = self.stream.get_data()
                 self.stream_data.append([dt.now(),
-                                        data,
-                                        0])
-            except:
+                                         data,
+                                         0])
+            except Exception:
                 messagebox.showwarning("Nothing to read", SENSOR_DATA_ERROR)
                 self.is_streaming = False
+                self.k1.is_streaming = True
                 self.stream_reset()
         self.after(DATA_SPEED, self.save_data)
 
     def save_video(self):
-        if self.is_streaming:
+        if self.k1.is_streaming:
             if len(self.k1.depth_buffer) > 0 and len(self.k1.rgb_buffer) > 0:
                 depth = self.k1.depth_buffer[0]
                 video = self.k1.rgb_buffer[0]
@@ -363,5 +365,6 @@ class SensorControl(Tk):
         for i in range(6):
             self.clients[i].is_streaming = False
         self.after(1003, self.set_state)
+
 
 SensorControl()

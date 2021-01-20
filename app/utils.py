@@ -18,8 +18,8 @@ SENSORS = ["sensors/sensor1/data",
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-DATA_SPEED = 200 # ms
-VIDEO_SPEED = 33 # ms
+DATA_SPEED = 200  # ms
+VIDEO_SPEED = 33  # ms
 FILEFORMAT = "%Y_%m_%d_%H_%M_%S"
 
 # Message

@@ -10,7 +10,7 @@ parser.add_argument("-s", "--sensor", type=int)
 args = parser.parse_args()
 
 SENSOR_MAX = 40
-SENSOR_MIN = 0
+SENSOR_MIN = 20
 SENSOR = args.sensor
 
 BLACK = (0, 0, 0)
@@ -39,8 +39,8 @@ def draw_grid(data):
                 color = 255
             if color < 0:
                 color = 0
-            pygame.draw.rect(win, color,
-                                (VEL*j, VEL*i, SHAPE, SHAPE))
+            pygame.draw.rect(win, (color, color/6, (255 - color)),
+                             (VEL*j, VEL*i, SHAPE, SHAPE))
             score = font.render(f"{num}", 1, WHITE)
             win.blit(score, (VEL*j, VEL*i))
 
@@ -60,6 +60,7 @@ def on_message(client, userdata, message):
     data = np.reshape(np.array(data), (8, 8))
     draw_grid(data)
     pygame.display.flip()
+
 
 client = mqtt.Client(f"sensor{SENSOR}_read")
 client.on_connect = on_connect

@@ -27,12 +27,13 @@ VEL = int(WIDTH / 8)
 SHAPE = VEL - 1
 
 root = tk.Tk()
-root.filename = filedialog.askopenfilename(initialdir="/home/tulgaa/Desktop/network/paho-mqtt/",
+root.filename = filedialog.askopenfilename(initialdir="/home/tulgaa/Desktop/net/paho-mqtt/",
                                            title="Select file",
                                            filetypes=(("csv file", "*.csv"),
                                                       ("all files", "*.*")))
 
 pygame.init()
+
 
 def draw_grid(data):
     for i in range(8):
@@ -47,6 +48,7 @@ def draw_grid(data):
                              (VEL*j, VEL*i, SHAPE, SHAPE))
             score = font.render(f"{num}", 1, WHITE)
             win.blit(score, (VEL*j, VEL*i))
+
 
 if len(root.filename) == 0:
     pass
@@ -76,8 +78,7 @@ else:
             for k in range(8):
                 data_array[i][j][k] = data[i][count]
                 count += 1
-        
-        
+
     win = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 15)
@@ -88,11 +89,10 @@ else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
-        
+
         draw_grid(data_array[frame])
         pygame.display.flip()
         clock.tick(10)
         frame += 1
         if frame == len(data):
             frame = 0
-    

@@ -8,7 +8,7 @@ class PopUp(Tk):
         self.val = 0
         self.master = master
         self.win = Toplevel(self.master)
-        
+
         self.input = Entry(self.win, width=10)
         self.input.grid(row=0, column=0)
 
@@ -19,5 +19,5 @@ class PopUp(Tk):
         try:
             self.val = self.input.get()
             self.win.destroy()
-        except:
+        except Exception:
             pass

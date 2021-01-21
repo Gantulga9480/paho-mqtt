@@ -10,18 +10,55 @@ SENSORS = ["sensors/sensor1/data",
            "sensors/sensor5/data",
            "sensors/sensor6/data"]
 
+KINECTS = [['k1', 'xbox']]
+
 # Command list
 
 # Path list
+SAVE_PATH = r"path"
 
 # Add or remove activity here
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-DATA_SPEED = 200  # ms
+DATA_SPEED = 100  # ms
 VIDEO_SPEED = 33  # ms
-FILEFORMAT = "%Y_%m_%d_%H_%M_%S"
+BUFFER_THRESHOLD = 5
+BUFFER_EMPTY_THRESHOLD = 2
+XBOX_KINECT_FRAME_SIZE = (640, 480)
+AZURE_KINECT_FRAME_SIZE = (1024, 1024)
+TIME_FORMAT = "%H_%M_%S"
+DATE_FORMAT = "%Y_%m_%d"
+DATE_TIME = "%Y_%m_%d_%H_%M_%S"
+
+SRT_FORMAT = "%H:%M:%S,000"
 
 # Message
 FILE_FOUND_MSG = "Same file found\nOverwrite existing file?"
-SENSOR_DATA_ERROR = "Not recieving data from sensor"
+BUFFER_ERROR = "Buffer error occured chech log"
+SENSOR_ERROR = "Sensor is not ready, check"
+KINECT_ERROR = "Kinect is not ready, check"
+
+
+class Color:
+
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
+    YELLOW = (255, 255, 0)
+
+
+def get_time(sec, raw=False):
+    mins = sec // 60
+    sec = sec % 60
+    hours = mins // 60
+    mins = mins % 60
+    if raw:
+        return (hours, mins, sec)
+    else:
+        h = str(hours).zfill(2)
+        m = str(mins).zfill(2)
+        s = str(sec).zfill(2)
+        return f"{h}:{m}:{s},000"

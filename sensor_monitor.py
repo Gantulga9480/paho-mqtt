@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import pygame
 from app.utils import BROKER
+from app.utils import Color as c
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--sensor", type=int)
@@ -12,13 +13,6 @@ args = parser.parse_args()
 SENSOR_MAX = 40
 SENSOR_MIN = 20
 SENSOR = args.sensor
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 177, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
 
 WIDTH = 400
 HEIGHT = 400
@@ -41,7 +35,7 @@ def draw_grid(data):
                 color = 0
             pygame.draw.rect(win, (color, color/6, (255 - color)),
                              (VEL*j, VEL*i, SHAPE, SHAPE))
-            score = font.render(f"{num}", 1, WHITE)
+            score = font.render(f"{num}", 1, c.WHITE)
             win.blit(score, (VEL*j, VEL*i))
 
 

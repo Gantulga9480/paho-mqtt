@@ -55,5 +55,5 @@ class UserInfo(Tk):
             self.height = int(self.height_entr.get())
             self.weight = int(self.weight_entr.get())
             self.win.destroy()
-        except:
+        except Exception:
             pass

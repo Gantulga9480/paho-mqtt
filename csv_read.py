@@ -1,7 +1,7 @@
 import csv
 import numpy as np
 
-file_1 = open("data_by_activity/activity_1/2021_01_19_03_13_00/2021_01_19_03_13_00.csv")
+file_1 = open("")
 data = []
 with file_1:
     csv_reader = csv.reader(file_1, delimiter=',')

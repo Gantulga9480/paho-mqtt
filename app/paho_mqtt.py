@@ -1,14 +1,17 @@
 import paho.mqtt.client as mqtt
+from app.utils import BUFFER_THRESHOLD
 
 
 class PahoMqtt:
 
     def __init__(self, broker, info, port=1883,
-                 raw_msg=False, c_msg=None, d_msg=None):
+                 raw_msg=False, c_msg="", d_msg=""):
         self.__broker = broker
         self.__port = port
-        self.msg = None
+        self.info = info
+        self.msg_buffer = list()
         self.is_streaming = False
+        self.sensor_ready = False
         self.c_msg = c_msg
         self.d_msg = d_msg
         self.__client = mqtt.Client(f"sensor_control_{info}")
@@ -26,18 +29,25 @@ class PahoMqtt:
         print(f"{self.c_msg} connected")
 
     def __on_message(self, client, userdata, message):
-        self.is_streaming = True
-        self.msg = message.payload.decode("utf-8", "ignore")
+        self.sensor_ready = True
+        if self.is_streaming:
+            self.msg_buffer.append(message.payload.decode("utf-8", "ignore"))
+        if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
+            print(f"Buffer overflowe at {self.info}-{len(self.msg_buffer)}")
+            raise BufferError
 
     def __on_message_raw(self, client, userdata, message):
-        self.is_streaming = True
-        self.msg = message.payload
+        self.sensor_ready = True
+        if self.is_streaming:
+            self.msg_buffer.append(message.payload)
+        if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
+            raise BufferError
 
     def __on_publish(self, client, userdata, result):
         pass
 
     def __on_disconnect(self, client, userdata, rc):
-        self.is_streaming = False
+        self.sensor_ready = False
         print(f"{self.d_msg} disconnected")
 
     def __wait_for_publish(self):

@@ -34,26 +34,27 @@ class SensorControl(Tk):
         self.height = "User"
         self.weight = "User"
 
+        self.clients = list()
+        self.kinects = list()
+        self.sensor_state = list()
+
         self.is_streaming = False
-        self.is_write = True
-        self.stream_data = []
-        self.stream_video = []
-        self.stream_depth = []
-        self.clients = []
-        self.stream = None
-        self.save_path = ""
+
         self.activity = StringVar()
-        self.ignore = BooleanVar()
-        self.k1 = Kinect(id=1)
-        # self.k2 = Kinect(id=2)
-        self.frame_size = (640, 480)
+        self.sensor_ignore = BooleanVar()
+        self.buffer_ignore = BooleanVar()
+
+        for item in KINECTS:
+            self.kinects.append(Kinect(item[0], type_is=item[1]))
 
         # Clients
-        for i in range(len(SENSORS)):
+        for item in SENSORS:
             self.clients.append(PahoMqtt(BROKER, f"sensor-{i}",
-                                         c_msg=SENSORS[i]))
-            self.clients[i].subscribe(SENSORS[i])
+                                         c_msg=item))
+            self.clients[i].subscribe(item)
             self.clients[i].loop_start()
+
+        self.stream = Stream(sensor=self.clients, kinect=self.kinects)
 
         # Tk widgets
         self.title("Control")
@@ -65,45 +66,21 @@ class SensorControl(Tk):
                                         background='white')
         self.sensor_frame1.pack(side=LEFT, fill="y")
 
-        self.label_sensor_1 = Label(self.sensor_frame1, text="SENSOR 1",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_1.grid(row=0, column=0, columnspan=2)
+        for i in range(len(SENSORS)):
+            self.sensor_state.append(Label(self.sensor_frame1,
+                                           text=f"SENSOR {i}",
+                                           background='white',
+                                           font=("default", 15, 'bold')))
+            self.sensor_state[i].grid(row=i, column=0)
 
-        self.label_sensor_2 = Label(self.sensor_frame1, text="SENSOR 2",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_2.grid(row=1, column=0, columnspan=2)
+        for i in range(len(KINECTS)):
+            self.sensor_state.append(Label(self.sensor_frame1,
+                                           text=f"KINECT {i}",
+                                           background='white',
+                                           font=("default", 15, 'bold')))
+            self.sensor_state[i+len(SENSORS)].grid(row=i+len(SENSORS),
+                                                   column=0)
 
-        self.label_sensor_3 = Label(self.sensor_frame1, text="SENSOR 3",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_3.grid(row=2, column=0, columnspan=2)
-
-        self.label_sensor_4 = Label(self.sensor_frame1, text="SENSOR 4",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_4.grid(row=3, column=0, columnspan=2)
-
-        self.label_sensor_5 = Label(self.sensor_frame1, text="SENSOR 5",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_5.grid(row=4, column=0, columnspan=2)
-
-        self.label_sensor_6 = Label(self.sensor_frame1, text="SENSOR 6",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_6.grid(row=5, column=0, columnspan=2)
-
-        self.label_sensor_7 = Label(self.sensor_frame1, text="KINECT 1",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_7.grid(row=6, column=0, columnspan=2)
-
-        self.label_sensor_8 = Label(self.sensor_frame1, text="KINECT 2",
-                                    background='white',
-                                    font=("default", 15, 'bold'))
-        self.label_sensor_8.grid(row=7, column=0, columnspan=2)
         self.start_btn = ttk.Button(self.sensor_frame1,
                                     text="Refresh", command=self.refresh)
         self.start_btn.grid(row=8, column=0)
@@ -154,12 +131,12 @@ class SensorControl(Tk):
         self.activity_menu.grid(row=4, column=0, columnspan=2, pady=5)
 
         self.stream_start_btn = ttk.Button(self.sensor_frame2,
-                                           text="Steam start",
+                                           text="Stream start",
                                            command=self.stream_start,
                                            width=11)
         self.stream_start_btn.grid(row=5, column=0, padx=2, pady=2)
         self.stream_stop_btn = ttk.Button(self.sensor_frame2,
-                                          text="Steam stop",
+                                          text="Stream stop",
                                           command=self.stream_stop,
                                           width=11)
         self.stream_stop_btn["state"] = DISABLED
@@ -198,12 +175,19 @@ class SensorControl(Tk):
         tool = Menu(menubar, tearoff=0)
         tool.add_command(label="Insert user info", command=self.user_info)
         tool.add_checkbutton(label="Ignore sensor error",
-                             onvalue=1, offvalue=0, variable=self.ignore)
+                             onvalue=1, offvalue=0,
+                             variable=self.sensor_ignore)
+        tool.add_checkbutton(label="Ignore buffer error",
+                             onvalue=1, offvalue=0,
+                             variable=self.buffer_ignore)
         menubar.add_cascade(label="Tools", menu=tool)
         self.config(menu=menubar)
 
-        self.save_data()
-        self.save_video()
+        self.stream_reset()
+
+        self.stream_data()
+        self.stream_video()
+
         self.set_state()
         self.refresh()
 
@@ -211,123 +195,233 @@ class SensorControl(Tk):
         self.mainloop()
         # Do not write code after main loop
 
-    def stream_start(self):
+    def activity_start(self):
+        self.stream_stop_btn['state'] = DISABLED
+        self.stream_start_btn['state'] = DISABLED
+        self.stream_save_btn['state'] = DISABLED
+        self.stream_reset_btn['state'] = DISABLED
+        self.act_end_btn['state'] = NORMAL
+        self.act_start_btn['state'] = DISABLED
+
+        self.stream.set_error(self.sensor_ignore.get(),
+                              self.buffer_ignore.get())
+
+        crnt_time = dt.today()
+        self.time_start = time.time() - self.start_sec
+        self.activity_list.append(self.activity.get())
+        self.real_time_start.append(crnt_time)
+        self.activity_time_list[0].append(len(self.sensor_stream))
+        self.video_activity_time[0].append(len(self.video_stream))
+
+    def activity_end(self):
         self.stream_stop_btn['state'] = NORMAL
         self.stream_start_btn['state'] = DISABLED
-        self.stream_reset_btn['state'] = NORMAL
-        self.stream = Stream(clients=self.clients, ignore=self.ignore.get())
-        self.crnt_time = dt.today().strftime(FILEFORMAT)
-        self.save_path = \
-            f"data_by_activity/{self.activity.get()}/{self.crnt_time}/{self.crnt_time}"
-        self.copy_path = \
-            f"data_by_time/{self.crnt_time}/{self.crnt_time}"
+        self.stream_save_btn['state'] = DISABLED
+        self.stream_reset_btn['state'] = DISABLED
+        self.act_end_btn['state'] = DISABLED
+        self.act_start_btn['state'] = NORMAL
 
-        if Path(f"{self.save_path}.csv").is_file():
-            is_write = messagebox.askyesno("Stream save",
-                                           FILE_FOUND_MSG)
-            if is_write:
-                self.is_streaming = True
-                self.k1.is_streaming = True
+        crnt_time = dt.today()
+        self.real_time_end.append(get_time(time.time() - self.time_start,
+                                           raw=True))
+        self.activity_time_list[1].append(len(self.sensor_stream))
+        self.video_activity_time[1].append(len(self.video_stream))
+
+    def stream_start(self):
+        sen_count = 0
+        kin_count = 0
+        for i in range(len(SENSORS)):
+            if self.clients[i].sensor_ready:
+                sen_count += 1
             else:
-                pass
-        else:
+                if self.ignore:
+                    sen_count += 1
+                else:
+                    messagebox.showwarning("Sensor Error",
+                                           f"{SENSOR_ERROR}-{i+1}")
+        for kinect in self.kinects:
+            if kinect.is_ready():
+                kin_count += 1
+            else:
+                messagebox.showwarning("Sensor Error",
+                                       f"{KINECT_ERROR}-{kinect.id_name}")
+                print(f"type: {kinect.type_is}, name: {kinect.id_name} error!")
+
+        if sen_count == len(self.clients) and kin_count == len(self.kinects):
             self.is_streaming = True
-            self.k1.is_streaming = True
+            for client in self.clients:
+                client.is_streaming = True
+            for kinect in self.kinects:
+                kinect.is_streaming = True
+        else:
+            self.is_streaming = False
         if self.is_streaming:
-            if len(self.stream_data) == 0:
-                self.stream_data.append([self.age, self.sex,
-                                         self.height, self.weight])
+            if len(self.sensor_stream) == 0:
+                crnt_time = dt.today()
+                self.start_time = crnt_time.strftime(TIME_FORMAT)
+                self.date = crnt_time.strftime(DATE_FORMAT)
+                self.data_time = crnt_time.strftime(DATE_TIME)
+
+                self.time_path = \
+                    f"data_by_time/{self.date}/{self.data_time}/"
+
+                self.start_sec = time.time()
+
+            self.stream_start_btn['state'] = DISABLED
+            self.stream_start_btn['text'] = "Resume stream"
+            self.stream_stop_btn['state'] = NORMAL
+            self.stream_reset_btn['state'] = DISABLED
+            self.stream_save_btn['state'] = DISABLED
+            self.act_end_btn['state'] = DISABLED
+            self.act_start_btn['state'] = NORMAL
 
     def stream_stop(self):
+        crnt_time = dt.today()
+        self.stop_sec = time.time()
+        self.stop_time = crnt_time.strftime(TIME_FORMAT)
         self.stream_stop_btn['state'] = DISABLED
         self.stream_start_btn['state'] = NORMAL
-        if len(self.stream_data) > 0:
-            self.stream_save_btn['state'] = NORMAL
-            self.stream_reset_btn['state'] = NORMAL
-        else:
-            pass
+        self.stream_save_btn['state'] = NORMAL
+        self.stream_reset_btn['state'] = NORMAL
+        self.act_end_btn['state'] = DISABLED
+        self.act_start_btn['state'] = DISABLED
+
         self.is_streaming = False
-        self.k1.is_streaming = False
-        del(self.stream)
+        for client in self.clients:
+            client.is_streaming = False
+        for kinect in self.kinects:
+            kinect.is_streaming = False
 
     def stream_save(self):
+        self.stream_start_btn['text'] = "Stream start"
+        self.stream_stop_btn['state'] = DISABLED
+        self.stream_start_btn['state'] = NORMAL
         self.stream_save_btn['state'] = DISABLED
         self.stream_reset_btn['state'] = DISABLED
-        if len(self.stream_data) > 0:
-            self.stream_data[1][2] = f"{self.activity.get()}-start"
-            self.stream_data[-1][2] = f"{self.activity.get()}-end"
-            os.makedirs(f"data_by_activity/{self.activity.get()}/{self.crnt_time}")
-            os.makedirs(f"data_by_time/{self.crnt_time}")
-            self.rgb_out = cv2.VideoWriter(f"{self.save_path}_rgb.avi",
-                                           cv2.VideoWriter_fourcc(*'DIVX'),
-                                           30, self.frame_size)
-            self.depth_out = cv2.VideoWriter(f"{self.save_path}_depth.avi",
-                                             cv2.VideoWriter_fourcc(*'DIVX'),
-                                             30, self.frame_size)
-            self.file_data = open(f"{self.save_path}.csv", "w+", newline='')
-            writer = csv.writer(self.file_data)
-            with self.file_data:
-                for row in self.stream_data:
+        self.act_end_btn['state'] = DISABLED
+        self.act_start_btn['state'] = DISABLED
+        os.makedirs(self.time_path)
+        for index, label in enumerate(self.activity_list):
+            self.sensor_stream[self.activity_time_list[0][index]-1][2] = \
+                f"{label} start"
+            self.sensor_stream[self.activity_time_list[1][index]-1][2] = \
+                f"{label} end"
+
+            act_frame = list()
+            for i in range(self.activity_time_list[0]-1,
+                           self.activity_time_list[1], 1):
+                act_frame.append(self.sensor_stream[i])
+            data_time = self.real_time_start[index].strftime(DATE_TIME)
+            os.mkdir(f"/activity/{label}/{data_time}/")
+            path = f"/activity/{label}/{data_time}/{data_time}"
+            data_open = open(f"{path}.csv", "w+", newline='')
+            writer = csv.writer(data_open)
+            with data_open:
+                for row in act_frame:
                     writer.writerow(row)
-            for i in range(len(self.stream_video)):
-                self.rgb_out.write(self.stream_video[i])
-            for i in range(len(self.stream_depth)):
-                self.depth_out.write(self.stream_depth[i])
-            self.rgb_out.release()
-            self.depth_out.release()
-            copyfile(f"{self.save_path}.csv",
-                     f"{self.copy_path}.csv")
-            copyfile(f"{self.save_path}_rgb.avi",
-                     f"{self.copy_path}_rgb.avi")
-            copyfile(f"{self.save_path}_depth.avi",
-                     f"{self.copy_path}_depth.avi")
-        else:
-            messagebox.showinfo("Stream save", "No Data to save!")
-        print("left in depth_buffer", len(self.k1.depth_buffer))
-        print("left in rgb_buffer", len(self.k1.rgb_buffer))
-        self.stream_data.clear()
-        self.stream_video.clear()
-        self.stream_depth.clear()
-        self.k1.depth_buffer.clear()
-        self.k1.rgb_buffer.clear()
+            for 
+            xbox_rgb_out = cv2.VideoWriter(f"{path}_k1_rgb.avi",
+                                           cv2.VideoWriter_fourcc(*'DIVX'),
+                                           30, XBOX_KINECT_FRAME_SIZE)
+            xbox_depth_out = cv2.VideoWriter(f"{self.save_path}_k1_depth.avi",
+                                             cv2.VideoWriter_fourcc(*'DIVX'),
+                                             30, XBOX_KINECT_FRAME_SIZE)
+            azure_rgb_out = cv2.VideoWriter(f"{path}_k2_rgb.avi",
+                                            cv2.VideoWriter_fourcc(*'DIVX'),
+                                            15, XBOX_KINECT_FRAME_SIZE)
+            azure_depth_out = cv2.VideoWriter(f"{self.save_path}_k2_depth.avi",
+                                              cv2.VideoWriter_fourcc(*'DIVX'),
+                                              15, XBOX_KINECT_FRAME_SIZE)
+
+        self.file_data = open(f"{self.save_path}.csv", "w+", newline='')
+        writer = csv.writer(self.file_data)
+        with self.file_data:
+            for row in self.stream_data:
+                writer.writerow(row)
+        for i in range(len(self.stream_video)):
+            self.rgb_out.write(self.stream_video[i])
+        for i in range(len(self.stream_depth)):
+            self.depth_out.write(self.stream_depth[i])
+        self.rgb_out.release()
+        self.depth_out.release()
+        copyfile(f"{self.save_path}.csv",
+                 f"{self.copy_path}.csv")
+        copyfile(f"{self.save_path}_rgb.avi",
+                 f"{self.copy_path}_rgb.avi")
+        copyfile(f"{self.save_path}_depth.avi",
+                 f"{self.copy_path}_depth.avi")
 
     def stream_reset(self):
+        self.stream_start_btn['text'] = "Stream start"
         self.stream_reset_btn['state'] = DISABLED
         self.stream_save_btn['state'] = DISABLED
         self.stream_stop_btn['state'] = DISABLED
         self.stream_start_btn['state'] = NORMAL
-        self.stream_data.clear()
-        self.stream_video.clear()
-        self.stream_depth.clear()
-        self.k1.depth_buffer.clear()
-        self.k1.rgb_buffer.clear()
-        for i in range(len(SENSORS)):
-            self.clients[i].msg = None
+        self.act_start_btn['state'] = DISABLED
+        self.act_start_btn['state'] = DISABLED
+        self.sensor_stream = list()
+        self.video_stream = list()
+        self.depth_stream = list()
+        self.activity_list = list()
+        self.activity_time_list = [[], []]
+        self.video_activity_time = [[], []]
+        self.real_time_start = list()
+        self.real_time_end = list()
 
-    def save_data(self):
+        for _ in range(len(self.kinects)):
+            self.video_stream.append([])
+            self.depth_stream.append([])
+
+        for sensor in self.clients:
+            sensor.msg_buffer.clear()
+        for kinect in self.kinects:
+            kinect.rgb_buffer.clear()
+            kinect.depth_buffer.clear()
+
+    def stream_data(self):
         if self.is_streaming:
             try:
                 data = self.stream.get_data()
-                self.stream_data.append([dt.now(),
-                                         data,
-                                         0])
-            except Exception:
-                messagebox.showwarning("Nothing to read", SENSOR_DATA_ERROR)
-                self.is_streaming = False
-                self.k1.is_streaming = True
+                self.sensor_stream.append([dt.now(),
+                                           data,
+                                           0])
+            except BufferError:
+                messagebox.showerror("Error", BUFFER_ERROR)
+                self.stream_stop()
                 self.stream_reset()
         self.after(DATA_SPEED, self.save_data)
 
-    def save_video(self):
-        if self.k1.is_streaming:
-            if len(self.k1.depth_buffer) > 0 and len(self.k1.rgb_buffer) > 0:
-                depth = self.k1.depth_buffer[0]
-                video = self.k1.rgb_buffer[0]
-                self.k1.depth_buffer.pop(0)
-                self.k1.rgb_buffer.pop(0)
-                self.stream_video.append(video)
-                self.stream_depth.append(depth)
+    def stream_video(self):
+        if self.is_streaming:
+            try:
+                video, depth = self.stream.get_video_stream()
+                for i in range(len(self.kinects)):
+                    self.video_stream[i].append(video[i])
+                    self.depth_stream[i].append(depth[i])
+            except BufferError:
+                messagebox.showerror("Error", BUFFER_ERROR)
+                self.stream_stop()
+                self.stream_reset()
         self.after(VIDEO_SPEED, self.save_video)
+
+    def summary(self):
+        # os.system("clear")
+        print("--- RESULT SUMMARY ---")
+        print(f"start time: {self.start_time} ---> end time: {self.stop_time}")
+        print(f"Duration: {get_time(self.stop_sec - self.start_sec)}\n")
+        print("Activities performed")
+        for label in self.activity_list:
+            print(f"    {label}")
+        print("----------------------------------------------------\n")
+        for kinect in self.kinects:
+            print("kinect", kinect.id_name,
+                  len(kinect.depth_buffer), "left in depth_buffer")
+            print("kinect", kinect.id_name,
+                  len(kinect.rgb_buffer), "left in rgb_buffer")
+        print("----------------------------------------------------\n")
+        for sensor in self.clients:
+            print(sensor.info, len(sensor.msg_buffer), "left in msg_buffer")
+        print("----------------------------------------------------\n")
 
     def user_info(self):
         user = UserInfo(self)
@@ -343,45 +437,21 @@ class SensorControl(Tk):
         del(user)
 
     def refresh(self):
-        if self.clients[0].is_streaming:
-            self.label_sensor_1["foreground"] = 'green'
-        else:
-            self.label_sensor_1["foreground"] = 'red'
-        if self.clients[1].is_streaming:
-            self.label_sensor_2["foreground"] = 'green'
-        else:
-            self.label_sensor_2["foreground"] = 'red'
-        if self.clients[2].is_streaming:
-            self.label_sensor_3["foreground"] = 'green'
-        else:
-            self.label_sensor_3["foreground"] = 'red'
-        if self.clients[3].is_streaming:
-            self.label_sensor_4["foreground"] = 'green'
-        else:
-            self.label_sensor_4["foreground"] = 'red'
-        if self.clients[4].is_streaming:
-            self.label_sensor_5["foreground"] = 'green'
-        else:
-            self.label_sensor_5["foreground"] = 'red'
-        if self.clients[5].is_streaming:
-            self.label_sensor_6["foreground"] = 'green'
-        else:
-            self.label_sensor_6["foreground"] = 'red'
-        if self.k1.k1_depth_ready:
-            self.label_sensor_7["foreground"] = 'green'
-        else:
-            self.label_sensor_7["foreground"] = 'red'
-        """
-        if self.k2.k2_depth_ready:
-            self.label_sensor_8["foreground"] = 'green'
-        else:
-            self.label_sensor_8["foreground"] = 'red'
-        """
-        self.after(3333, self.refresh)
+        for i in range(len(self.clients)):
+            if self.clients[i].sensor_ready:
+                self.sensor_state[i]["foreground"] = 'green'
+            else:
+                self.sensor_state[i]["foreground"] = 'red'
+        for i in range(len(self.kinects)):
+            if self.kinects[i].is_ready():
+                self.sensor_state[i+len(SENSORS)]["foreground"] = 'green'
+            else:
+                self.sensor_state[i+len(SENSORS)]["foreground"] = 'red'
+        self.after(1333, self.refresh)
 
     def set_state(self):
-        for i in range(6):
-            self.clients[i].is_streaming = False
+        for i in range(len(SENSORS)):
+            self.clients[i].sensor_ready = False
         self.after(1003, self.set_state)
 
 

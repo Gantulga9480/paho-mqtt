@@ -3,11 +3,14 @@ from cv_bridge import CvBridge
 import cv2
 import rospy
 from sensor_msgs.msg import Image
+from app.utils import BUFFER_THRESHOLD
 
 
 class Kinect:
 
-    def __init__(self, id=0):
+    def __init__(self, id_name, type_is=None):
+        self.id_name = id_name
+        self.type = type_is
         self.bridge = CvBridge()
         self.depth_buffer = list()
         self.rgb_buffer = list()
@@ -15,10 +18,20 @@ class Kinect:
         self.k1_depth_ready = False
         self.k1_rgb_ready = False
 
-        rospy.init_node(f'kinect{id}_node', anonymous=True)
-        rospy.Subscriber('/camera/depth/image_raw', Image, self.callback1)
-        rospy.Subscriber('/camera/rgb/image_color', Image, self.callback2)
+        rospy.init_node(f'kinect_{id_name}_node', anonymous=True)
+        if type_is is 'xbox':
+            rospy.Subscriber('/camera/depth/image_raw', Image, self.callback1)
+            rospy.Subscriber('/camera/rgb/image_color', Image, self.callback2)
+        elif type_is is 'azure':
+            rospy.Subscriber('/depth/image_raw', Image, self.callback1)
+            rospy.Subscriber('/rgb/image_color', Image, self.callback2)
         # rospy.spin()
+
+    def is_ready(self):
+        if self.k1_depth_ready and self.k1_rgb_ready:
+            return True
+        else:
+            return False
 
     def callback1(self, msg):
         """Depth data from kinect"""
@@ -28,9 +41,8 @@ class Kinect:
         img = img[..., None].repeat(3, -1).astype("uint8")
         if self.is_streaming:
             self.depth_buffer.append(np.round(img).astype(np.uint8))
-        if self.depth_buffer.__len__() > 10:
+        if self.depth_buffer.__len__() > BUFFER_THRESHOLD:
             raise BufferError
-        # print("depth")
 
     def callback2(self, msg):
         """RGB data from kinect"""
@@ -38,9 +50,8 @@ class Kinect:
         img = self.bridge.imgmsg_to_cv2(msg)
         if self.is_streaming:
             self.rgb_buffer.append(np.round(img).astype(np.uint8))
-        if self.rgb_buffer.__len__() > 10:
+        if self.rgb_buffer.__len__() > BUFFER_THRESHOLD:
             raise BufferError
-        # print("img")
 
     def img_show(self, img):
         cv2.imshow('xbox_kinext_depth', img)

@@ -293,13 +293,6 @@ class SensorControl(Tk):
             kinect.is_streaming = False
 
     def stream_save(self):
-        self.stream_start_btn['text'] = "Stream start"
-        self.stream_stop_btn['state'] = DISABLED
-        self.stream_start_btn['state'] = NORMAL
-        self.stream_save_btn['state'] = DISABLED
-        self.stream_reset_btn['state'] = DISABLED
-        self.act_end_btn['state'] = DISABLED
-        self.act_start_btn['state'] = DISABLED
         os.makedirs(self.time_path)
         for index, label in enumerate(self.activity_list):
             self.sensor_stream[self.activity_time_list[0][index]-1][2] = \
@@ -319,6 +312,7 @@ class SensorControl(Tk):
             with data_open:
                 for row in act_frame:
                     writer.writerow(row)
+        self.stream_reset()
         self.summary()
         """
         xbox_rgb_out = cv2.VideoWriter(f"{path}_k1_rgb.avi",
@@ -373,6 +367,9 @@ class SensorControl(Tk):
         for _ in range(len(self.kinects)):
             self.video_stream.append([])
             self.depth_stream.append([])
+
+        self.stream.video_buffer_empty_count = 0
+        self.stream.sensor_buffer_empty_count = 0
 
         for sensor in self.clients:
             sensor.msg_buffer.clear()

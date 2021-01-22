@@ -247,7 +247,7 @@ class SensorControl(Tk):
                                        f"{KINECT_ERROR}-{kinect.id_name}")
                 print(f"type: {kinect.type_is}, name: {kinect.id_name} error!")
 
-        if sen_count == len(SENSORS) and kin_count == len(self.kinects):
+        if sen_count == len(SENSORS) and kin_count == len(KINECTS):
             self.is_streaming = True
             for client in self.clients:
                 client.is_streaming = True
@@ -319,18 +319,21 @@ class SensorControl(Tk):
             with data_open:
                 for row in act_frame:
                     writer.writerow(row)
-            xbox_rgb_out = cv2.VideoWriter(f"{path}_k1_rgb.avi",
-                                           cv2.VideoWriter_fourcc(*'DIVX'),
-                                           30, XBOX_KINECT_FRAME_SIZE)
-            xbox_depth_out = cv2.VideoWriter(f"{self.save_path}_k1_depth.avi",
-                                             cv2.VideoWriter_fourcc(*'DIVX'),
-                                             30, XBOX_KINECT_FRAME_SIZE)
-            azure_rgb_out = cv2.VideoWriter(f"{path}_k2_rgb.avi",
+        self.summary()
+        """
+        xbox_rgb_out = cv2.VideoWriter(f"{path}_k1_rgb.avi",
+                                        cv2.VideoWriter_fourcc(*'DIVX'),
+                                        30, XBOX_KINECT_FRAME_SIZE)
+        xbox_depth_out = cv2.VideoWriter(f"{self.save_path}_k1_depth.avi",
+                                            cv2.VideoWriter_fourcc(*'DIVX'),
+                                            30, XBOX_KINECT_FRAME_SIZE)
+        azure_rgb_out = cv2.VideoWriter(f"{path}_k2_rgb.avi",
+                                        cv2.VideoWriter_fourcc(*'DIVX'),
+                                        15, XBOX_KINECT_FRAME_SIZE)
+        azure_depth_out = cv2.VideoWriter(f"{self.save_path}_k2_depth.avi",
                                             cv2.VideoWriter_fourcc(*'DIVX'),
                                             15, XBOX_KINECT_FRAME_SIZE)
-            azure_depth_out = cv2.VideoWriter(f"{self.save_path}_k2_depth.avi",
-                                              cv2.VideoWriter_fourcc(*'DIVX'),
-                                              15, XBOX_KINECT_FRAME_SIZE)
+        """
 
         self.file_data = open(f"{self.save_path}.csv", "w+", newline='')
         writer = csv.writer(self.file_data)

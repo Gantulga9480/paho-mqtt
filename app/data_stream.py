@@ -1,5 +1,6 @@
 import numpy as np
 from app.utils import BUFFER_EMPTY_THRESHOLD
+from app.utils import BUFFER_THRESHOLD
 
 
 class Stream:
@@ -15,21 +16,17 @@ class Stream:
     def get_data(self):
         data = list()
         for index, sensor in enumerate(self.sensor):
-            if sensor.msg_buffer.__len__() is not 0:
-                try:
-                    msg = sensor.msg_buffer[0].replace("[", "")
-                    msg = msg.replace("]", "")
-                    msg = msg.split(",")
-                    msg = [float(i) for i in msg]
-                    data.append(msg)
-                    sensor.msg_buffer.pop(0)
-                    # print("poping element --------------------------------")
-                except BufferError:
+            msg_len = sensor.msg_buffer.__len__()
+            if msg_len is not 0:
+                msg = sensor.msg_buffer[0]
+                sensor.msg_buffer.pop(0)
+                data.append(msg)
+                # print("poping element --------------------------------")
+                if msg_len > BUFFER_THRESHOLD:
                     if self.sensor_ignore:
-                        print("passing sensor data overflow error on sensor",
-                              index)
+                        pass
                     else:
-                        print("Sensor data overflow error on sensor", index)
+                        print(f"Overflowe at {sensor.info}: len {msg_len}")
                         raise BufferError
             else:
                 print(f"Sensor-{index+1} data buffer is currently empty")
@@ -42,28 +39,29 @@ class Stream:
         video = list()
         depth = list()
         for index, kinect in enumerate(self.kinect):
-            if kinect.rgb_buffer.__len__() is not 0 and \
-                    kinect.depth_buffer.__len__() is not 0:
-                try:
-                    dp = kinect.depth_buffer[0]
-                    vd = kinect.rgb_buffer[0]
-                    kinect.depth_buffer.pop(0)
-                    kinect.rgb_buffer.pop(0)
-                    video.append(vd)
-                    depth.append(dp)
-                    # print("poping video --------------------------------")
-                except BufferError:
+            rgb_len = kinect.rgb_buffer.__len__()
+            dp_len = kinect.depth_buffer.__len__()
+            if rgb_len is not 0 and dp_len is not 0:
+                dp = kinect.depth_buffer[0]
+                vd = kinect.rgb_buffer[0]
+                kinect.depth_buffer.pop(0)
+                kinect.rgb_buffer.pop(0)
+                video.append(vd)
+                depth.append(dp)
+                # print("poping video --------------------------------")
+                if rgb_len > BUFFER_THRESHOLD or dp_len > BUFFER_THRESHOLD:
                     if self.buffer_ignore:
-                        print("passing kinect data overflow error on sensor",
-                              index)
+                        pass
                     else:
-                        print("Kinect data overflow error on sensor", index)
+                        print("Kinect data overflow error on", index)
+                        print(f"rgb: {rgb_len}, depth: {dp_len}")
                         raise BufferError
             else:
                 print(f"Kinect-{index+1} data buffer is currently empty")
                 self.video_buffer_empty_count += 1
                 return False, False
                 if self.video_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
+                    print(f"Not connected to {kinect.id_name}:{kinect.type}")
                     raise BufferError
         return video, depth
 

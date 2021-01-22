@@ -10,7 +10,7 @@ SENSORS = ["sensors/sensor1/data",
            "sensors/sensor5/data",
            "sensors/sensor6/data"]
 
-KINECTS = [['k1', 'xbox']]
+KINECTS = [['kinect-1', 'xbox']]
 
 # Command list
 

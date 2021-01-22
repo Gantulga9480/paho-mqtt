@@ -1,5 +1,4 @@
 import paho.mqtt.client as mqtt
-from app.utils import BUFFER_THRESHOLD
 
 
 class PahoMqtt:
@@ -30,17 +29,18 @@ class PahoMqtt:
 
     def __on_message(self, client, userdata, message):
         self.sensor_ready = True
+        msg = message.payload.decode("utf-8", "ignore")
+        msg = msg.replace("[", "")
+        msg = msg.replace("]", "")
+        msg = msg.split(",")
+        msg = [float(i) for i in msg]
         if self.is_streaming:
-            self.msg_buffer.append(message.payload.decode("utf-8", "ignore"))
-        if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
-            print(f"Buffer overflowe at {self.info}: Buffer len {len(self.msg_buffer)}")
+            self.msg_buffer.append(msg)
 
     def __on_message_raw(self, client, userdata, message):
         self.sensor_ready = True
         if self.is_streaming:
             self.msg_buffer.append(message.payload)
-        if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
-            print(f"Buffer overflowe at {self.info}: Buffer len {len(self.msg_buffer)}")
 
     def __on_publish(self, client, userdata, result):
         pass

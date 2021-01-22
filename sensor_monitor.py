@@ -11,7 +11,7 @@ parser.add_argument("-s", "--sensor", type=int)
 args = parser.parse_args()
 
 SENSOR_MAX = 40
-SENSOR_MIN = 20
+SENSOR_MIN = 15
 SENSOR = args.sensor
 
 WIDTH = 400
@@ -33,7 +33,7 @@ def draw_grid(data):
                 color = 255
             if color < 0:
                 color = 0
-            pygame.draw.rect(win, (color, color/6, (255 - color)),
+            pygame.draw.rect(win, (color, color, (255 - color)),
                              (VEL*j, VEL*i, SHAPE, SHAPE))
             score = font.render(f"{num}", 1, c.WHITE)
             win.blit(score, (VEL*j, VEL*i))

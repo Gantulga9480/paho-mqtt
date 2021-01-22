@@ -42,7 +42,7 @@ class Kinect:
         if self.is_streaming:
             self.depth_buffer.append(np.round(img).astype(np.uint8))
         if self.depth_buffer.__len__() > BUFFER_THRESHOLD:
-            raise BufferError
+            print("Depth Buffer full")
 
     def callback2(self, msg):
         """RGB data from kinect"""
@@ -51,7 +51,7 @@ class Kinect:
         if self.is_streaming:
             self.rgb_buffer.append(np.round(img).astype(np.uint8))
         if self.rgb_buffer.__len__() > BUFFER_THRESHOLD:
-            raise BufferError
+            print("RGB Buffer full")
 
     def img_show(self, img):
         cv2.imshow('xbox_kinext_depth', img)

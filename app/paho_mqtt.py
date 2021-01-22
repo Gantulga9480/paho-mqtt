@@ -33,15 +33,14 @@ class PahoMqtt:
         if self.is_streaming:
             self.msg_buffer.append(message.payload.decode("utf-8", "ignore"))
         if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
-            print(f"Buffer overflowe at {self.info}-{len(self.msg_buffer)}")
-            raise BufferError
+            print(f"Buffer overflowe at {self.info}: Buffer len {len(self.msg_buffer)}")
 
     def __on_message_raw(self, client, userdata, message):
         self.sensor_ready = True
         if self.is_streaming:
             self.msg_buffer.append(message.payload)
         if self.msg_buffer.__len__() > BUFFER_THRESHOLD:
-            raise BufferError
+            print(f"Buffer overflowe at {self.info}: Buffer len {len(self.msg_buffer)}")
 
     def __on_publish(self, client, userdata, result):
         pass

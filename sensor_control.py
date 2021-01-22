@@ -48,7 +48,7 @@ class SensorControl(Tk):
             self.kinects.append(Kinect(item[0], type_is=item[1]))
 
         # Clients
-        for item in SENSORS:
+        for i, item in enumerate(SENSORS):
             self.clients.append(PahoMqtt(BROKER, f"sensor-{i}",
                                          c_msg=item))
             self.clients[i].subscribe(item)
@@ -68,7 +68,7 @@ class SensorControl(Tk):
 
         for i in range(len(SENSORS)):
             self.sensor_state.append(Label(self.sensor_frame1,
-                                           text=f"SENSOR {i}",
+                                           text=f"SENSOR {i+1}",
                                            background='white',
                                            font=("default", 15, 'bold')))
             self.sensor_state[i].grid(row=i, column=0)
@@ -234,7 +234,7 @@ class SensorControl(Tk):
             if self.clients[i].sensor_ready:
                 sen_count += 1
             else:
-                if self.ignore:
+                if self.sensor_ignore:
                     sen_count += 1
                 else:
                     messagebox.showwarning("Sensor Error",
@@ -247,7 +247,7 @@ class SensorControl(Tk):
                                        f"{KINECT_ERROR}-{kinect.id_name}")
                 print(f"type: {kinect.type_is}, name: {kinect.id_name} error!")
 
-        if sen_count == len(self.clients) and kin_count == len(self.kinects):
+        if sen_count == len(SENSORS) and kin_count == len(self.kinects):
             self.is_streaming = True
             for client in self.clients:
                 client.is_streaming = True
@@ -319,7 +319,6 @@ class SensorControl(Tk):
             with data_open:
                 for row in act_frame:
                     writer.writerow(row)
-            for 
             xbox_rgb_out = cv2.VideoWriter(f"{path}_k1_rgb.avi",
                                            cv2.VideoWriter_fourcc(*'DIVX'),
                                            30, XBOX_KINECT_FRAME_SIZE)
@@ -389,20 +388,21 @@ class SensorControl(Tk):
                 messagebox.showerror("Error", BUFFER_ERROR)
                 self.stream_stop()
                 self.stream_reset()
-        self.after(DATA_SPEED, self.save_data)
+        self.after(DATA_SPEED, self.stream_data)
 
     def stream_video(self):
         if self.is_streaming:
             try:
                 video, depth = self.stream.get_video_stream()
-                for i in range(len(self.kinects)):
-                    self.video_stream[i].append(video[i])
-                    self.depth_stream[i].append(depth[i])
+                if video and depth:
+                    for i in range(len(self.kinects)):
+                        self.video_stream[i].append(video[i])
+                        self.depth_stream[i].append(depth[i])
             except BufferError:
                 messagebox.showerror("Error", BUFFER_ERROR)
                 self.stream_stop()
                 self.stream_reset()
-        self.after(VIDEO_SPEED, self.save_video)
+        self.after(VIDEO_SPEED, self.stream_video)
 
     def summary(self):
         # os.system("clear")

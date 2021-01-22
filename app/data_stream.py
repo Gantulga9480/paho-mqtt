@@ -9,8 +9,8 @@ class Stream:
         self.kinect = kinect
         self.sensor_ignore = False
         self.buffer_ignore = False
-        self.sensor_buffer_empy_count = 0
-        self.video_buffer_empy_count = 0
+        self.sensor_buffer_empty_count = 0
+        self.video_buffer_empty_count = 0
 
     def get_data(self):
         data = list()
@@ -23,6 +23,7 @@ class Stream:
                     msg = [float(i) for i in msg]
                     data.append(msg)
                     sensor.msg_buffer.pop(0)
+                    # print("poping element --------------------------------")
                 except BufferError:
                     if self.sensor_ignore:
                         print("passing sensor data overflow error on sensor",
@@ -32,8 +33,8 @@ class Stream:
                         raise BufferError
             else:
                 print(f"Sensor-{index+1} data buffer is currently empty")
-                self.sensor_buffer_empy_count += 1
-                if self.sensor_buffer_empy_count > BUFFER_EMPTY_THRESHOLD:
+                self.sensor_buffer_empty_count += 1
+                if self.sensor_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
                     raise BufferError
         return data
 
@@ -50,6 +51,7 @@ class Stream:
                     kinect.rgb_buffer.pop(0)
                     video.append(vd)
                     depth.append(dp)
+                    # print("poping video --------------------------------")
                 except BufferError:
                     if self.buffer_ignore:
                         print("passing kinect data overflow error on sensor",
@@ -59,8 +61,9 @@ class Stream:
                         raise BufferError
             else:
                 print(f"Kinect-{index+1} data buffer is currently empty")
-                self.video_buffer_empy_count += 1
-                if self.video_buffer_empy_count > BUFFER_EMPTY_THRESHOLD:
+                self.video_buffer_empty_count += 1
+                return False, False
+                if self.video_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
                     raise BufferError
         return video, depth
 

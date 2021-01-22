@@ -308,8 +308,8 @@ class SensorControl(Tk):
                 f"{label} end"
 
             act_frame = list()
-            for i in range(self.activity_time_list[0]-1,
-                           self.activity_time_list[1], 1):
+            for i in range(self.activity_time_list[0][index]-1,
+                           self.activity_time_list[1][index], 1):
                 act_frame.append(self.sensor_stream[i])
             data_time = self.real_time_start[index].strftime(DATE_TIME)
             os.mkdir(f"/activity/{label}/{data_time}/")

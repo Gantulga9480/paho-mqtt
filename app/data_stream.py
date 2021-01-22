@@ -32,6 +32,7 @@ class Stream:
                 print(f"Sensor-{index+1} data buffer is currently empty")
                 self.sensor_buffer_empty_count += 1
                 if self.sensor_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
+                    print(f"Not connected to {sensor.info}")
                     raise BufferError
         return data
 

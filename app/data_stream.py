@@ -16,12 +16,16 @@ class Stream:
     def get_data(self):
         data = list()
         for index, sensor in enumerate(self.sensor):
-            msg_len = sensor.msg_buffer.__len__()
+            msg_len = len(sensor.msg_buffer)
             if msg_len is not 0:
                 msg = sensor.msg_buffer[0]
-                sensor.msg_buffer.pop(0)
+                if msg_len >= 2:
+                    sensor.msg_buffer.pop(0)
+                msg = msg.replace("[", "")
+                msg = msg.replace("]", "")
+                msg = msg.split(",")
+                msg = [float(i) for i in msg]
                 data.append(msg)
-                # print("poping element --------------------------------")
                 if msg_len > BUFFER_THRESHOLD:
                     if self.sensor_ignore:
                         pass
@@ -49,7 +53,6 @@ class Stream:
                 kinect.rgb_buffer.pop(0)
                 video.append(vd)
                 depth.append(dp)
-                # print("poping video --------------------------------")
                 if rgb_len > BUFFER_THRESHOLD or dp_len > BUFFER_THRESHOLD:
                     if self.buffer_ignore:
                         pass
@@ -60,10 +63,10 @@ class Stream:
             else:
                 print(f"Kinect-{index+1} data buffer is currently empty")
                 self.video_buffer_empty_count += 1
-                return False, False
                 if self.video_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
                     print(f"Not connected to {kinect.id_name}:{kinect.type}")
                     raise BufferError
+                return False, False
         return video, depth
 
     def set_error(self, s_ignore, b_ignore):

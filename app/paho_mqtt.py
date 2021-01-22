@@ -30,10 +30,6 @@ class PahoMqtt:
     def __on_message(self, client, userdata, message):
         self.sensor_ready = True
         msg = message.payload.decode("utf-8", "ignore")
-        msg = msg.replace("[", "")
-        msg = msg.replace("]", "")
-        msg = msg.split(",")
-        msg = [float(i) for i in msg]
         if self.is_streaming:
             self.msg_buffer.append(msg)
 

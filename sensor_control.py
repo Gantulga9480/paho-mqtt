@@ -49,7 +49,7 @@ class SensorControl(Tk):
 
         # Clients
         for i, item in enumerate(SENSORS):
-            self.clients.append(PahoMqtt(BROKER, f"sensor-{i}",
+            self.clients.append(PahoMqtt(BROKER, f"sensor-{i+1}",
                                          c_msg=item))
             self.clients[i].subscribe(item)
             self.clients[i].loop_start()
@@ -158,14 +158,14 @@ class SensorControl(Tk):
 
         self.act_start_btn = ttk.Button(self.sensor_frame2,
                                         text="Activity start",
-                                        command=self.stream_save,
+                                        command=self.activity_start,
                                         width=11)
         self.act_start_btn["state"] = DISABLED
         self.act_start_btn.grid(row=6, column=0, padx=2, pady=5)
 
         self.act_end_btn = ttk.Button(self.sensor_frame2,
                                       text="Activity end",
-                                      command=self.stream_save,
+                                      command=self.activity_end,
                                       width=11)
         self.act_end_btn["state"] = DISABLED
         self.act_end_btn.grid(row=6, column=1, padx=2, pady=5)
@@ -333,7 +333,6 @@ class SensorControl(Tk):
         azure_depth_out = cv2.VideoWriter(f"{self.save_path}_k2_depth.avi",
                                             cv2.VideoWriter_fourcc(*'DIVX'),
                                             15, XBOX_KINECT_FRAME_SIZE)
-        """
 
         self.file_data = open(f"{self.save_path}.csv", "w+", newline='')
         writer = csv.writer(self.file_data)
@@ -352,6 +351,7 @@ class SensorControl(Tk):
                  f"{self.copy_path}_rgb.avi")
         copyfile(f"{self.save_path}_depth.avi",
                  f"{self.copy_path}_depth.avi")
+        """
 
     def stream_reset(self):
         self.stream_start_btn['text'] = "Stream start"

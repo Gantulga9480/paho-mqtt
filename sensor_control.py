@@ -312,7 +312,7 @@ class SensorControl(Tk):
                            self.activity_time_list[1][index], 1):
                 act_frame.append(self.sensor_stream[i])
             data_time = self.real_time_start[index].strftime(DATE_TIME)
-            os.mkdir(f"/activity/{label}/{data_time}/")
+            os.makedirs(f"/activity/{label}/{data_time}/")
             path = f"/activity/{label}/{data_time}/{data_time}"
             data_open = open(f"{path}.csv", "w+", newline='')
             writer = csv.writer(data_open)

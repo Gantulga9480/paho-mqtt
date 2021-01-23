@@ -350,27 +350,35 @@ class SensorControl(Tk):
             xbox_depth_out = cv2.VideoWriter(f"{path}_k1_depth.avi",
                                              cv2.VideoWriter_fourcc(*'DIVX'),
                                              30, XBOX_KINECT_FRAME_SIZE)
-            """
             azure_rgb_out = cv2.VideoWriter(f"{path}_k2_rgb.avi",
                                             cv2.VideoWriter_fourcc(*'DIVX'),
-                                            15, XBOX_KINECT_FRAME_SIZE)
+                                            30, AZURE_KINECT_RGB_SIZE)
             azure_depth_out = cv2.VideoWriter(f"{path}_k2_depth.avi",
                                               cv2.VideoWriter_fourcc(*'DIVX'),
-                                              15, XBOX_KINECT_FRAME_SIZE)
-            """
+                                              30, AZURE_KINECT_DEPTH_SIZE)
             rgb_frame = list()
             depth_frame = list()
+            azure_rgb = list()
+            azure_depth = list()
             for i in range(self.video_activity_time[0][index]-1,
                            self.video_activity_time[1][index], 1):
                 rgb_frame.append(self.video_stream[0][i])
                 depth_frame.append(self.depth_stream[0][i])
+                azure_rgb.append(self.video_stream[1][i])
+                azure_depth.append(self.depth_stream[1][i])
 
             for frame in rgb_frame:
                 xbox_rgb_out.write(frame)
             for frame in depth_frame:
                 xbox_depth_out.write(frame)
+            for frame in azure_rgb:
+                azure_rgb_out.write(frame)
+            for frame in azure_depth:
+                azure_depth_out.write(frame)
             xbox_rgb_out.release()
             xbox_depth_out.release()
+            azure_rgb_out.release()
+            azure_depth_out.release()
         srt.close()
         self.summary()
         self.stream_reset()

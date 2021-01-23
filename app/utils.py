@@ -1,6 +1,6 @@
 # One and only broker
-BROKER = "192.168.0.100"
-# BROKER = "127.0.0.1"
+# BROKER = "192.168.0.100"
+BROKER = "127.0.0.1"
 
 # Topic list
 SENSORS = ["sensors/sensor1/data",
@@ -21,13 +21,14 @@ SAVE_PATH = r"path"
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
+SUB_DURATION = 2
 DATA_SPEED = 100  # ms
 VIDEO_SPEED = 33  # ms
 BUFFER_THRESHOLD = 5
 BUFFER_EMPTY_THRESHOLD = 5
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_FRAME_SIZE = (1024, 1024)
-TIME_FORMAT = "%H_%M_%S"
+TIME_FORMAT = "%H:%M:%S"
 DATE_FORMAT = "%Y_%m_%d"
 DATE_TIME = "%Y_%m_%d_%H_%M_%S"
 
@@ -52,11 +53,11 @@ class Color:
 
 def get_time(sec, raw=False):
     mins = sec // 60
-    sec = sec % 60
-    hours = mins // 60
-    mins = mins % 60
+    sec = int(round(sec % 60))
+    hours = int(mins // 60)
+    mins = int(mins % 60)
     if raw:
-        return (hours, mins, sec)
+        return hours, mins, sec
     else:
         h = str(hours).zfill(2)
         m = str(mins).zfill(2)

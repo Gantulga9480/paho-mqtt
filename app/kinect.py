@@ -19,14 +19,14 @@ class Kinect:
         self.k_depth_ready = False
         self.k_rgb_ready = False
 
-        rospy.init_node(f'kinect_{id_name}_node', anonymous=True)
-        rospy.Subscriber('/camera/depth/image_raw', Image, self.callback1)
-        rospy.Subscriber('/camera/rgb/image_color', Image, self.callback2)
         if type_is is 'xbox':
+            rospy.init_node(f'{id_name}_node', anonymous=True)
             pass
         elif type_is is 'azure':
             self.k4a = PyK4A()
             self.k4a.start()
+        rospy.Subscriber('/camera/depth/image_raw', Image, self.callback1)
+        rospy.Subscriber('/camera/rgb/image_color', Image, self.callback2)
 
     def is_ready(self):
         if self.k_depth_ready and self.k_rgb_ready:

@@ -48,7 +48,7 @@ class Stream:
             dp_len = len(kinect.depth_buffer)
             a_dp_len = len(kinect.azure_rgb_buffer)
             a_rgb_len = len(kinect.azure_depth_buffer)
-            if rgb_len > 2 and dp_len > 0 and a_dp_len > 1 and a_rgb_len > 0:
+            if rgb_len > 2 and dp_len > 2 and a_dp_len > 2 and a_rgb_len > 2:
                 dp = kinect.depth_buffer.pop(0)
                 vd = kinect.rgb_buffer.pop(0)
                 a_vd = kinect.azure_rgb_buffer.pop(0)

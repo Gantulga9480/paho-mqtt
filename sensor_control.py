@@ -401,7 +401,7 @@ class SensorControl(Tk):
         self.real_time_end = list()
         self.time_start_list = list()
 
-        for _ in range(len(self.kinects)):
+        for _ in range(len(self.kinects)+1):
             self.video_stream.append([])
             self.depth_stream.append([])
 
@@ -413,6 +413,8 @@ class SensorControl(Tk):
         for kinect in self.kinects:
             kinect.rgb_buffer.clear()
             kinect.depth_buffer.clear()
+            kinect.azure_depth_buffer.clear()
+            kinect.azure_rgb_buffer.clear()
 
     def stream_data(self):
         if self.is_streaming:
@@ -435,6 +437,10 @@ class SensorControl(Tk):
                     for i in range(len(self.kinects)):
                         self.video_stream[i].append(video[i])
                         self.depth_stream[i].append(depth[i])
+                        self.video_stream[i+1].append(video[i+1])
+                        self.depth_stream[i+1].append(depth[i+1])
+                else:
+                    print("passing")
             except BufferError:
                 messagebox.showerror("Error", BUFFER_ERROR)
                 self.stream_stop()

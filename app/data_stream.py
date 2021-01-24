@@ -44,21 +44,27 @@ class Stream:
         video = list()
         depth = list()
         for index, kinect in enumerate(self.kinect):
-            rgb_len = kinect.rgb_buffer.__len__()
-            dp_len = kinect.depth_buffer.__len__()
-            if rgb_len is not 0 and dp_len is not 0:
-                dp = kinect.depth_buffer[0]
-                vd = kinect.rgb_buffer[0]
-                kinect.depth_buffer.pop(0)
-                kinect.rgb_buffer.pop(0)
+            rgb_len = len(kinect.rgb_buffer)
+            dp_len = len(kinect.depth_buffer)
+            a_dp_len = len(kinect.azure_rgb_buffer)
+            a_rgb_len = len(kinect.azure_depth_buffer)
+            if rgb_len > 2 and dp_len > 0 and a_dp_len > 1 and a_rgb_len > 0:
+                dp = kinect.depth_buffer.pop(0)
+                vd = kinect.rgb_buffer.pop(0)
+                a_vd = kinect.azure_rgb_buffer.pop(0)
+                a_dp = kinect.azure_depth_buffer.pop(0)
+
                 video.append(vd)
                 depth.append(dp)
+                video.append(a_vd)
+                depth.append(a_dp)
                 if rgb_len > BUFFER_THRESHOLD or dp_len > BUFFER_THRESHOLD:
                     if self.buffer_ignore:
                         pass
                     else:
                         print("Kinect data overflow error on", index)
                         print(f"rgb: {rgb_len}, depth: {dp_len}")
+                        print(f'a_rgb: {a_rgb_len}, a_depth: {a_dp_len}')
                         raise BufferError
             else:
                 print(f"Kinect-{index+1} data buffer is currently empty")

@@ -8,9 +8,10 @@ SENSORS = ["sensors/sensor1/data",
            "sensors/sensor3/data",
            "sensors/sensor4/data",
            "sensors/sensor5/data",
-           "sensors/sensor6/data"]
+           "sensors/sensor6/data",
+           "sensors/sensor7/data"]
 
-KINECTS = [['kinect_1', 'xbox'], ['azure_1', 'azure']]
+KINECTS = [['kinect_1', 'xbox']]
 
 # Command list
 
@@ -21,11 +22,11 @@ SAVE_PATH = r"path"
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-SUB_DURATION = 2
+SUB_DURATION = 5
 DATA_SPEED = 100  # ms
 VIDEO_SPEED = 33  # ms
-BUFFER_THRESHOLD = 5
-BUFFER_EMPTY_THRESHOLD = 5
+BUFFER_THRESHOLD = 30
+BUFFER_EMPTY_THRESHOLD = 30
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)
@@ -50,6 +51,31 @@ class Color:
     GREEN = (0, 255, 0)
     BLUE = (0, 0, 255)
     YELLOW = (255, 255, 0)
+
+
+class CsvRead:
+
+    def __init__(self):
+        import csv
+        import numpy as np
+
+    def read(self):
+        file_1 = open("")
+        data = []
+        with file_1:
+            csv_reader = csv.reader(file_1, delimiter=',')
+            for i, row in enumerate(csv_reader):
+                if i == 0:
+                    pass
+                else:
+                    data = row[1].replace("[", "").replace("]", "")
+                    data = data.replace(" ", "").split(",")
+
+            data_1 = np.zeros((len(data), 64, 64))
+            for i in range(len(data)):
+                for j in range(8):
+                    for k in range(8):
+                        data_1[i][j][k] = data[i*j]
 
 
 def get_time(sec, raw=False):

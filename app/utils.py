@@ -3,14 +3,9 @@
 BROKER = "127.0.0.1"
 
 # Topic list
-SENSORS = ["sensors/sensor1/data",
-           "sensors/sensor2/data",
-           "sensors/sensor3/data",
-           "sensors/sensor4/data",
-           "sensors/sensor5/data",
-           "sensors/sensor6/data"]
+SENSORS = ["sensors/sensor1/data"]
 
-KINECTS = [['kinect_1', 'xbox']]
+# KINECTS = [['kinect_1', 'xbox']]
 
 # Command list
 
@@ -21,9 +16,9 @@ SAVE_PATH = r"path"
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-SUB_DURATION = 5
+SUB_DURATION = 1
 DATA_SPEED = 100  # ms
-VIDEO_SPEED = 33  # ms
+VIDEO_SPEED = 34  # ms
 BUFFER_THRESHOLD = 30
 BUFFER_EMPTY_THRESHOLD = 30
 XBOX_KINECT_FRAME_SIZE = (640, 480)
@@ -78,14 +73,54 @@ class CsvRead:
 
 
 def get_time(sec, raw=False):
+    sec = round(sec, 3)
     mins = sec // 60
-    sec = int(round(sec % 60))
+    sec_s = int(sec % 60)
+    ms = int((sec - sec_s)*1000)
     hours = int(mins // 60)
     mins = int(mins % 60)
     if raw:
-        return hours, mins, sec
+        return hours, mins, sec_s, ms
     else:
         h = str(hours).zfill(2)
         m = str(mins).zfill(2)
-        s = str(sec).zfill(2)
-        return f"{h}:{m}:{s},000"
+        s = str(sec_s).zfill(2)
+        ms = str(ms).zfill(3)
+        return f"{h}:{m}:{s},{ms}"
+
+
+def get_time_date(start=None, stop=None, raw=False):
+    delta = stop - start
+    delta = str(delta)
+    time = delta.split(":")
+    h = int(time[0])
+    m = int(time[1])
+    s = int(float(time[2].lstrip("0")))
+    ms = int((float(time[2].lstrip("0")) - s)*1000)
+    if raw:
+        return h, m, s, ms
+    else:
+        f"{str(h).zfill(2)}:{str(m).zfill(2)}:{str(s).zfill(2)},{str(ms)}"
+
+
+def get_time_1(time, raw=True):
+    s = time // 1000
+    m = s // 60
+    h = m // 60
+    s = s % 60
+    m = m % 60
+    ms = time % 1000
+    if raw:
+        return h, m, s, ms
+    else:
+        return f"{str(h).zfill}"
+
+
+def get_time_2(date):
+    time = date.strftime(TIME_FORMAT)
+    time = time.split(":")
+    h = int(time[0])
+    m = int(time[1])
+    s = int(float(time[2].lstrip("0")))
+    ms = int((float(time[2].lstrip("0")) - s)*1000)
+    return h, m, s, ms

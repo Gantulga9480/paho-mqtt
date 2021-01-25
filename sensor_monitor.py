@@ -27,7 +27,7 @@ font = pygame.font.SysFont("arial", 15)
 def draw_grid(data):
     for i in range(8):
         for j in range(8):
-            num = np.round(float(data[i][j]))
+            num = float(data[i][j])
             color = int((num-SENSOR_MIN)/(SENSOR_MAX-SENSOR_MIN)*255)
             if color > 255:
                 color = 255

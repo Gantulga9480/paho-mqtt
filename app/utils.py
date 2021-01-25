@@ -8,8 +8,7 @@ SENSORS = ["sensors/sensor1/data",
            "sensors/sensor3/data",
            "sensors/sensor4/data",
            "sensors/sensor5/data",
-           "sensors/sensor6/data",
-           "sensors/sensor7/data"]
+           "sensors/sensor6/data"]
 
 KINECTS = [['kinect_1', 'xbox']]
 

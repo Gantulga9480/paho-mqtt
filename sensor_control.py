@@ -5,9 +5,12 @@ import os
 import numpy as np
 import csv
 import cv2
+
 from pathlib import Path
 from datetime import datetime as dt
 from shutil import copyfile
+from pyk4a import PyK4A
+from freenect import sync_get_depth as get_depth, sync_get_video as get_video
 
 from tkinter import *
 from tkinter import ttk
@@ -44,9 +47,6 @@ class SensorControl(Tk):
         self.sensor_ignore = BooleanVar()
         self.buffer_ignore = BooleanVar()
 
-        for item in KINECTS:
-            self.kinects.append(Kinect(item[0], type_is=item[1]))
-
         # Clients
         for i, item in enumerate(SENSORS):
             self.clients.append(PahoMqtt(BROKER, f"sensor-{i+1}",
@@ -54,7 +54,7 @@ class SensorControl(Tk):
             self.clients[i].subscribe(item)
             self.clients[i].loop_start()
 
-        self.stream = Stream(sensor=self.clients, kinect=self.kinects)
+        self.stream = Stream(sensor=self.clients)
 
         # Tk widgets
         self.title("Control")
@@ -184,6 +184,9 @@ class SensorControl(Tk):
         self.config(menu=menubar)
 
         self.stream_reset()
+
+        self.azure = PyK4A()
+        self.azure.start()
 
         self.stream_data()
         self.stream_video()
@@ -432,6 +435,14 @@ class SensorControl(Tk):
     def stream_video(self):
         if self.is_streaming:
             try:
+                
+            except Exception:
+                pass
+
+    """
+    def stream_video(self):
+        if self.is_streaming:
+            try:
                 video, depth = self.stream.get_video_stream()
                 if video and depth:
                     for i in range(len(self.kinects)):
@@ -446,6 +457,7 @@ class SensorControl(Tk):
                 self.stream_stop()
                 self.stream_reset()
         self.after(VIDEO_SPEED, self.stream_video)
+    """
 
     def summary(self):
         os.system("clear")

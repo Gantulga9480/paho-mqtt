@@ -3,7 +3,15 @@
 BROKER = "127.0.0.1"
 
 # Topic list
-SENSORS = ["sensors/sensor1/data"]
+SENSORS = [["sensors/sensor1/data", 1, 1],
+           ["sensors/sensor2/data", 2, 1],
+           ["sensors/sensor3/data", 3, 1],
+           ["sensors/sensor4/data", 4, 1],
+           ["sensors/sensor5/data", 5, 1],
+           ["sensors/sensor6/data", 6, 1],
+           ["sensors/sensor7/data", 7, 1],
+           ["sensors/sensor8/data", 8, 1],
+           ["sensors/sensor9/data", 9, 1]]
 
 # KINECTS = [['kinect_1', 'xbox']]
 
@@ -18,16 +26,16 @@ ACTIVITIES = ["activity_1", "activity_2"]
 # Const
 SUB_DURATION = 1
 DATA_SPEED = 100  # ms
-VIDEO_SPEED = 34  # ms
+VIDEO_SPEED = 15  # ms
 BUFFER_THRESHOLD = 30
 BUFFER_EMPTY_THRESHOLD = 30
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)
+FPS = 30
 TIME_FORMAT = "%H:%M:%S"
 DATE_FORMAT = "%Y_%m_%d"
 DATE_TIME = "%Y_%m_%d_%H_%M_%S"
-
 SRT_FORMAT = "%H:%M:%S,000"
 
 # Message
@@ -45,31 +53,6 @@ class Color:
     GREEN = (0, 255, 0)
     BLUE = (0, 0, 255)
     YELLOW = (255, 255, 0)
-
-
-class CsvRead:
-
-    def __init__(self):
-        import csv
-        import numpy as np
-
-    def read(self):
-        file_1 = open("")
-        data = []
-        with file_1:
-            csv_reader = csv.reader(file_1, delimiter=',')
-            for i, row in enumerate(csv_reader):
-                if i == 0:
-                    pass
-                else:
-                    data = row[1].replace("[", "").replace("]", "")
-                    data = data.replace(" ", "").split(",")
-
-            data_1 = np.zeros((len(data), 64, 64))
-            for i in range(len(data)):
-                for j in range(8):
-                    for k in range(8):
-                        data_1[i][j][k] = data[i*j]
 
 
 def get_time(sec, raw=False):
@@ -116,8 +99,8 @@ def get_time_1(time, raw=True):
         return f"{str(h).zfill}"
 
 
-def get_time_2(date):
-    time = date.strftime(TIME_FORMAT)
+def get_time_from_data(date, time_format=TIME_FORMAT):
+    time = date.strftime(time_format)
     time = time.split(":")
     h = int(time[0])
     m = int(time[1])

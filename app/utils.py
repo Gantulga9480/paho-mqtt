@@ -13,7 +13,8 @@ SENSORS = [["sensors/sensor1/data", 1, 1],
            ["sensors/sensor8/data", 8, 1],
            ["sensors/sensor9/data", 9, 1]]
 
-# KINECTS = [['kinect_1', 'xbox']]
+KINECTS = [['kinect1', 1, 1],
+           ['kinect2', 2, 1]]
 
 # Command list
 
@@ -25,10 +26,11 @@ ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
 SUB_DURATION = 1
-DATA_SPEED = 100  # ms
+DATA_SPEED = 50  # ms
 VIDEO_SPEED = 15  # ms
+STREAM_SPEED = 1  # ms
 BUFFER_THRESHOLD = 30
-BUFFER_EMPTY_THRESHOLD = 30
+BUFFER_EMPTY_THRESHOLD = 10
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)

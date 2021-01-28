@@ -1,17 +1,8 @@
-import numpy as np
-from cv2 import VideoWriter, VideoWriter_fourcc
+import os
 
-width = 1280
-height = 720
-FPS = 24
-seconds = 10
-
-fourcc = VideoWriter_fourcc(*'MP42')
-video = VideoWriter('./noise.avi', fourcc, float(FPS), (width, height))
-
-for _ in range(FPS*seconds):
-    frame = np.random.randint(0, 256, 
-                              (height, width, 3), 
-                              dtype=np.uint8)
-    video.write(frame)
-video.release()
+os.system("k4arecorder output.mkv")
+count = 0
+while count < 1000:
+    count += 1
+    print("ww")
+os.system("^C")

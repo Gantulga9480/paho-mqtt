@@ -8,7 +8,7 @@ import cv2
 
 from pathlib import Path
 from datetime import datetime as dt
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import pyk4a
 from pyk4a import ColorResolution
 from pyk4a import Config, PyK4A
@@ -26,9 +26,7 @@ from tkinter import LEFT
 from tkinter import NORMAL
 
 from app.user_info import UserInfo
-from app.pop_up import PopUp
 from app.paho_mqtt import PahoMqtt
-from app.data_stream import Stream
 
 from app.utils import *
 
@@ -49,8 +47,6 @@ class SensorControl(Tk):
 
         self.is_activity_started = False
         self.is_streaming = False
-        self.time_2 = 0
-        self.time_1 = 0
 
         self.frame_count = 0
 
@@ -59,20 +55,19 @@ class SensorControl(Tk):
         self.buffer_ignore = BooleanVar()
 
         # Clients
-        self.kinect_client = PahoMqtt(BROKER, "KINECT control", c_msg="kinect")
+        self.kinect_client = PahoMqtt(BROKER, "KINECT", c_msg="kinect")
         self.kinect_client.loop_start()
+        self.sound_client = PahoMqtt(BROKER, "SOUND", c_msg="sound")
+        self.sound_client.loop_start()
         self.clients = list()
         for i, item in enumerate(SENSORS):
             if item[2]:
-                self.clients.append(PahoMqtt(BROKER, f"SENSOR {item[1]}",
+                self.clients.append(PahoMqtt(BROKER, f"{item[1]}",
                                              c_msg=item[0]))
                 self.clients[i].subscribe(item[0])
                 self.clients[i].loop_start()
             else:
                 pass
-
-        # sensor stream
-        self.stream = Stream(sensor=self.clients)
 
         # Attributes ----------------------------------------------------------
         #######################################################################
@@ -90,7 +85,7 @@ class SensorControl(Tk):
         self.sensor_state = list()
         for item in self.clients:
             self.sensor_state.append(Label(self.sensor_frame1,
-                                           text=f"{item.info}",
+                                           text=f"SEBSOR {item.info}",
                                            background='white',
                                            font=("default", 15, 'bold')))
             self.sensor_state[-1].grid(row=len(self.sensor_state),
@@ -159,7 +154,8 @@ class SensorControl(Tk):
 
         self.stream_reset_btn = ttk.Button(self.sensor_frame2,
                                            text="Stream reset",
-                                           command=self.stream_reset,
+                                           command=lambda:
+                                               self.stream_reset(delete=True),
                                            width=11)
         self.stream_reset_btn["state"] = DISABLED
         self.stream_reset_btn.grid(row=7, column=1, padx=2, pady=2)
@@ -206,7 +202,6 @@ class SensorControl(Tk):
         self.azure.start()
 
         self.stream_reset()
-        self.stream_sensor()
         self.get_video()
         self.stream_video()
         self.stream_depth()
@@ -219,44 +214,15 @@ class SensorControl(Tk):
         # Main loop -----------------------------------------------------------
         #######################################################################
 
-    def stream_sensor(self):
-        if self.is_streaming:
-            try:
-                data, is_full = self.stream.get_data()
-                if is_full:
-                    self.sensor_stream.append([dt.now(),
-                                               data,
-                                               0])
-                else:
-                    pass
-            except BufferError:
-                messagebox.showerror("Error", BUFFER_ERROR)
-                self.stream_stop()
-                self.stream_reset()
-        self.after(DATA_SPEED, self.stream_sensor)
-
     def get_video(self):
         if self.is_streaming:
-            # self.time_1 = time.perf_counter()
-            # print("time-1", self.time_1)
             img = self.azure.get_capture()
-            # print(round(self.time_2 - self.time_1, 6))
-            # img_color = img.color
-            # img_color = img_color[:, :, 2::-1].astype(np.uint8)
-            # img_color = img_color[:, :, 2::-1]
-            # cv2.imshow("color", img_color)
-            # cv2.waitKey(10)
             if np.any(img.color):
                 self.video_stream.append(img.color)
                 self.depth_stream.append(img.depth)
-                # pass
             else:
                 pass
-            # self.time_2 = time.perf_counter()
-            # print("time-2", self.time_2)
-            # print(round(self.time_2 - self.time_1, 6))
-        self.after(30 - int((self.time_2 - self.time_1)*1000), self.get_video)
-        # self.after(15, self.get_video)
+        self.after(30, self.get_video)
 
     def stream_video(self):
         if self.is_streaming:
@@ -285,6 +251,9 @@ class SensorControl(Tk):
         self.after(VIDEO_SPEED, self.stream_depth)
 
     def activity_start(self):
+        label = self.activity.get()
+        for client in self.clients:
+            client.label = f'{label}_start'
         self.is_activity_started = True
         self.stream_stop_btn['state'] = DISABLED
         self.stream_start_btn['state'] = DISABLED
@@ -293,13 +262,14 @@ class SensorControl(Tk):
         self.act_end_btn['state'] = NORMAL
         self.act_start_btn['state'] = DISABLED
 
-        self.activity_list.append(self.activity.get())
-        data_time = dt.today().strftime(DATE_TIME)
-        self.activity_time_list[0].append(len(self.sensor_stream))
+        self.activity_list.append(label)
+
         self.video_activity_time[0].append(self.frame_count)
-        self.path = f"activity/{self.activity.get()}/{data_time}"
 
     def activity_end(self):
+        label = self.activity.get()
+        for client in self.clients:
+            client.label = f'{label}_end'
         self.is_activity_started = False
 
         self.stream_stop_btn['state'] = NORMAL
@@ -309,7 +279,6 @@ class SensorControl(Tk):
         self.act_end_btn['state'] = DISABLED
         self.act_start_btn['state'] = NORMAL
 
-        self.activity_time_list[1].append(len(self.sensor_stream))
         self.video_activity_time[1].append(self.frame_count)
 
     def stream_start(self):
@@ -325,35 +294,27 @@ class SensorControl(Tk):
                                            f"{SENSOR_ERROR}-{i+1}")
 
         if sen_count == len(self.clients):
-            self.is_streaming = True
-            for client in self.clients:
-                client.is_streaming = True
-        else:
-            self.is_streaming = False
-        if self.is_streaming:
-            if len(self.sensor_stream) == 0:
-                crnt_time = dt.today()
-                self.start_time = crnt_time.strftime(TIME_FORMAT)
-                self.date = crnt_time.strftime(DATE_FORMAT)
-                self.data_time = crnt_time.strftime(DATE_TIME)
+            if not self.clients[0].is_started:
+                self.start_sec = dt.today()
+                self.date = self.start_sec.strftime(DATE_FORMAT)
+                self.time = self.start_sec.strftime(TIME_FORMAT)
 
                 self.time_path = \
-                    f"data/{self.date}/{self.data_time}"
-                msg = f'start-{self.time_path}'
-                self.kinect_client.publish(topic='kinect1', msg=msg, qos=0)
+                    f"{SAVE_PATH}/{self.date}/{self.time}"
+                msg = f'{START}-{self.time_path}'
+                self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
                 os.makedirs(self.time_path)
-                self.srt = open(f"{self.time_path}/k2_rgb.srt", "w+")
+                self.srt = open(f"{self.time_path}/k3_rgb.srt", "w+")
 
-                self.rgb_out = cv2.VideoWriter(f"{self.time_path}/k2_rgb.avi",
+                self.rgb_out = cv2.VideoWriter(f"{self.time_path}/k3_rgb.avi",
                                                cv2.VideoWriter_fourcc(*'DIVX'),
                                                FPS, AZURE_KINECT_RGB_SIZE)
-                self.depth_out = cv2.VideoWriter(f"{self.time_path}/k2_depth.avi",
+                self.depth_out = cv2.VideoWriter(f"{self.time_path}/k3_depth.avi",
                                                  cv2.VideoWriter_fourcc(*'DIVX'),
                                                  FPS, AZURE_KINECT_DEPTH_SIZE)
-
-                self.start_sec = dt.today()
-                self.stream.set_error(self.sensor_ignore.get(),
-                                      self.buffer_ignore.get())
+            self.is_streaming = True
+            for client in self.clients:
+                client.stream_init(self.time_path)
 
             self.stream_start_btn['state'] = DISABLED
             self.stream_start_btn['text'] = "Resume stream"
@@ -363,16 +324,15 @@ class SensorControl(Tk):
             self.act_end_btn['state'] = DISABLED
             self.act_start_btn['state'] = NORMAL
         else:
+            self.is_streaming = False
             self.stream_stop()
-            self.stream_reset()
+            self.stream_reset(delete=True)
 
     def stream_stop(self):
         self.is_streaming = False
         for client in self.clients:
-            client.is_streaming = False
-        crnt_time = dt.today()
-        self.stop_sec = crnt_time
-        self.stop_time = crnt_time.strftime(TIME_FORMAT)
+            client.stream_stop()
+        self.stop_sec = dt.today()
 
         self.stream_stop_btn['state'] = DISABLED
         self.stream_start_btn['state'] = NORMAL
@@ -390,11 +350,6 @@ class SensorControl(Tk):
 
     def stream_save(self):
         for index, label in enumerate(self.activity_list):
-            self.sensor_stream[self.activity_time_list[0][index]-1][2] = \
-                f"{label} start"
-            self.sensor_stream[self.activity_time_list[1][index]-1][2] = \
-                f"{label} end"
-            # srt file write
             time_start = self.video_activity_time[0][index] * 33
             time_stop = self.video_activity_time[1][index] * 33
             s_h, s_m, s_s, ms = get_time_1(time_start)
@@ -423,15 +378,10 @@ class SensorControl(Tk):
                                  f"{label} end\n",
                                  "\n"])
         self.srt.close()
-        csv_file = open(f'{self.time_path}/sensor_data.csv', "w+", newline='')
-        writer = csv.writer(csv_file)
-        with csv_file:
-            for item in self.sensor_stream:
-                writer.writerow(item)
         self.summary()
         self.stream_reset()
 
-    def stream_reset(self):
+    def stream_reset(self, delete=False):
         self.stream_start_btn['text'] = "Stream start"
         self.stream_reset_btn['state'] = DISABLED
         self.stream_save_btn['state'] = DISABLED
@@ -439,20 +389,26 @@ class SensorControl(Tk):
         self.stream_start_btn['state'] = NORMAL
         self.act_start_btn['state'] = DISABLED
         self.act_start_btn['state'] = DISABLED
-        self.sensor_stream = list()
         self.video_stream = list()
         self.depth_stream = list()
         self.activity_list = list()
-        self.activity_time_list = [[], []]
         self.video_activity_time = [[], []]
 
-        for sensor in self.clients:
-            sensor.msg_buffer.clear()
+        if delete:
+            try:
+                os.remove(f'{self.time_path}/k3_rgb.avi')
+                os.remove(f'{self.time_path}/k3_depth.avi')
+                os.remove(f'{self.time_path}/k3_rgb.srt')
+                for client in self.clients:
+                    os.remove(f'{self.time_path}/sensor_{client.info}.csv')
+                rmtree(f'{SAVE_PATH}/{self.date}/{self.time}')
+            except Exception as e:
+                print(str(e))
 
     def summary(self):
         os.system("clear")
         print("----  RESULT SUMMARY  ----")
-        print(f"start time: {self.start_time} ---> end time: {self.stop_time}")
+        print(f"start time: {self.start_sec.strftime(TIME_FORMAT)} ---> end time: {self.stop_sec.strftime(TIME_FORMAT)}")
         print(f"Duration: {get_time_date(self.start_sec, self.stop_sec)}")
         print("\n----------------------------------------------------")
         print("Activities performed:")
@@ -460,9 +416,6 @@ class SensorControl(Tk):
             spaces = [" " for i in range(index)]
             space = "".join(spaces)
             print(f"{space}{index+1}: {label}")
-        print("\n----------------------------------------------------")
-        for sensor in self.clients:
-            print(sensor.info, len(sensor.msg_buffer), "left in msg_buffer")
         print("----------------------------------------------------")
 
     def user_info(self):
@@ -486,8 +439,19 @@ class SensorControl(Tk):
                 self.sensor_state[i]["foreground"] = 'red'
 
     def set_state(self):
-        for i in range(len(self.clients)):
-            self.clients[i].sensor_ready = False
+        for client in self.clients:
+            if client.info == '8':
+                print(client.counter)
+            if client.counter != client.counter_temp:
+                client.counter_temp = client.counter
+                client.death_counter = 0
+            else:
+                print(f'[WARNING] SENSOR-{client.info} is not responding')
+                client.death_counter += 1
+                client.sensor_ready = False
+            if client.death_counter > 6:
+                messagebox.showerror(f'SENSOR {client.info} DEAD')
+                raise SensorDeathError(client.info)
         self.after(1000, self.set_state)
 
 

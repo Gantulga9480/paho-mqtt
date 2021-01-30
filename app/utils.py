@@ -17,35 +17,28 @@ KINECTS = [['kinect1', 1, 1],
            ['kinect2', 2, 1]]
 
 # Command list
+START = 'start'
+STOP = 'stop'
 
 # Path list
-SAVE_PATH = r"path"
+SAVE_PATH = "data"
 
 # Add or remove activity here
 ACTIVITIES = ["activity_1", "activity_2"]
 
 # Const
-SUB_DURATION = 1
-DATA_SPEED = 100  # ms
+SUB_DURATION = 2
 VIDEO_SPEED = 15  # ms
-STREAM_SPEED = 1  # ms
-BUFFER_THRESHOLD = 30
-BUFFER_EMPTY_THRESHOLD = 40
-NEXT_DATA_COUNTER_THRESHOLD = 2
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)
 FPS = 30
-TIME_FORMAT = "%H:%M:%S"
+TIME_FORMAT = "%H_%M_%S"
 DATE_FORMAT = "%Y_%m_%d"
 DATE_TIME = "%Y_%m_%d_%H_%M_%S"
-SRT_FORMAT = "%H:%M:%S,000"
 
 # Message
-FILE_FOUND_MSG = "Same file found\nOverwrite existing file?"
-BUFFER_ERROR = "Buffer error occured chech log"
 SENSOR_ERROR = "Sensor is not ready, check"
-KINECT_ERROR = "Kinect is not ready, check"
 
 
 class Color:
@@ -102,11 +95,7 @@ def get_time_1(time, raw=True):
         return f"{str(h).zfill}"
 
 
-def get_time_from_data(date, time_format=TIME_FORMAT):
-    time = date.strftime(time_format)
-    time = time.split(":")
-    h = int(time[0])
-    m = int(time[1])
-    s = int(float(time[2].lstrip("0")))
-    ms = int((float(time[2].lstrip("0")) - s)*1000)
-    return h, m, s, ms
+class SensorDeathError(Exception):
+    """Raised when client death_counter > 4"""
+    def __init__(self, msg):
+        print(f'SENSOR {msg} disconnected')

@@ -59,7 +59,7 @@ class SensorControl(Tk):
         self.buffer_ignore = BooleanVar()
 
         # Clients
-        self.kinect_client = PahoMqtt(BROKER, "KINECT control", c_msg="kinect 1")
+        self.kinect_client = PahoMqtt(BROKER, "KINECT control", c_msg="kinect")
         self.kinect_client.loop_start()
         self.clients = list()
         for i, item in enumerate(SENSORS):
@@ -297,7 +297,6 @@ class SensorControl(Tk):
         data_time = dt.today().strftime(DATE_TIME)
         self.activity_time_list[0].append(len(self.sensor_stream))
         self.video_activity_time[0].append(self.frame_count)
-        os.makedirs(f"activity/{self.activity.get()}/{data_time}")
         self.path = f"activity/{self.activity.get()}/{data_time}"
 
     def activity_end(self):
@@ -319,7 +318,7 @@ class SensorControl(Tk):
             if self.clients[i].sensor_ready:
                 sen_count += 1
             else:
-                if self.sensor_ignore:
+                if self.sensor_ignore.get():
                     sen_count += 1
                 else:
                     messagebox.showwarning("Sensor Error",
@@ -339,9 +338,9 @@ class SensorControl(Tk):
                 self.data_time = crnt_time.strftime(DATE_TIME)
 
                 self.time_path = \
-                    f"data_by_time/{self.date}/{self.data_time}"
-                msg = []
-                self.kinect_client.publish(topic='kinect1', msg='', qos=0)
+                    f"data/{self.date}/{self.data_time}"
+                msg = f'start-{self.time_path}'
+                self.kinect_client.publish(topic='kinect1', msg=msg, qos=0)
                 os.makedirs(self.time_path)
                 self.srt = open(f"{self.time_path}/k2_rgb.srt", "w+")
 
@@ -381,10 +380,13 @@ class SensorControl(Tk):
         self.stream_reset_btn['state'] = NORMAL
         self.act_end_btn['state'] = DISABLED
         self.act_start_btn['state'] = DISABLED
-        self.rgb_out.release()
-        self.depth_out.release()
-        del(self.rgb_out)
-        del(self.depth_out)
+        try:
+            self.rgb_out.release()
+            self.depth_out.release()
+            del(self.rgb_out)
+            del(self.depth_out)
+        except AttributeError:
+            pass
 
     def stream_save(self):
         for index, label in enumerate(self.activity_list):
@@ -392,13 +394,6 @@ class SensorControl(Tk):
                 f"{label} start"
             self.sensor_stream[self.activity_time_list[1][index]-1][2] = \
                 f"{label} end"
-            data_open = open(f"{self.path}.csv", "w+", newline='')
-            writer = csv.writer(data_open)
-            with data_open:
-                for i in range(self.activity_time_list[0][index]-1,
-                               self.activity_time_list[1][index], 1):
-                    writer.writerow(self.sensor_stream[i])
-
             # srt file write
             time_start = self.video_activity_time[0][index] * 33
             time_stop = self.video_activity_time[1][index] * 33
@@ -428,6 +423,11 @@ class SensorControl(Tk):
                                  f"{label} end\n",
                                  "\n"])
         self.srt.close()
+        csv_file = open(f'{self.time_path}/sensor_data.csv', "w+", newline='')
+        writer = csv.writer(csv_file)
+        with csv_file:
+            for item in self.sensor_stream:
+                writer.writerow(item)
         self.summary()
         self.stream_reset()
 

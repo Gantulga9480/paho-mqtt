@@ -1,4 +1,6 @@
 import paho.mqtt.client as mqtt
+from datetime import datetime as dt
+import csv
 
 
 class PahoMqtt:
@@ -9,6 +11,7 @@ class PahoMqtt:
         self.__port = port
         self.info = info
         self.msg_buffer = list()
+        self.temp = None
         self.is_streaming = False
         self.sensor_ready = False
         self.c_msg = c_msg
@@ -29,8 +32,11 @@ class PahoMqtt:
 
     def __on_message(self, client, userdata, message):
         self.sensor_ready = True
-        msg = message.payload.decode("utf-8", "ignore")
         if self.is_streaming:
+            msg = message.payload.decode("utf-8", "ignore")
+            msg = msg.replace("[", "")
+            msg = msg.replace("]", "")
+            msg = msg.replace(" ", "")
             self.msg_buffer.append(msg)
 
     def __on_message_raw(self, client, userdata, message):

@@ -11,6 +11,7 @@ class Stream:
         self.buffer_ignore = False
         self.sensor_buffer_empty_count = 0
         self.video_buffer_empty_count = 0
+        self.counts = [0 for _ in self.sensor]
 
     def get_data(self):
         data = list()
@@ -22,23 +23,27 @@ class Stream:
                 msg = msg.replace("[", "")
                 msg = msg.replace("]", "")
                 msg = msg.replace(" ", "")
+                sensor.temp = msg
                 data.append(msg)
+                self.counts[index] = 0
+            elif msg_len == 0 and sensor.temp:
+                data.append(sensor.temp)
+                sensor.temp = None
             elif msg_len > BUFFER_THRESHOLD:
                 if self.sensor_ignore:
                     pass
                 else:
                     print(f"Overflowe at {sensor.info} : len {msg_len}")
                     raise BufferError
-            elif msg_len is 0:
-                is_full = False
-            """
             else:
+                is_full = False
+                # data.append('Sensor disconnected')
                 print(f"Sensor-{index+1} data buffer is currently empty")
-                self.sensor_buffer_empty_count += 1
-                if self.sensor_buffer_empty_count > BUFFER_EMPTY_THRESHOLD:
+                self.counts[index] += 1
+                print(self.counts[index])
+                if self.counts[index] > BUFFER_EMPTY_THRESHOLD:
                     print(f"Not connected to {sensor.info}")
                     raise BufferError
-            """
         return data, is_full
 
     def set_error(self, s_ignore, b_ignore):

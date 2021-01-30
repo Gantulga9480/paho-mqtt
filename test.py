@@ -1,8 +1,6 @@
-import os
+import csv
 
-os.system("k4arecorder output.mkv")
-count = 0
-while count < 1000:
-    count += 1
-    print("ww")
-os.system("^C")
+file_ = open('file.csv', "w+", newline='')
+writer = csv.writer(file_)
+for i in range(10):
+    writer.writerow([j for j in range(i)])

@@ -19,9 +19,14 @@ KINECTS = [['kinect1', 1, 1],
 # Command list
 START = 'start'
 STOP = 'stop'
+RESET = 'reset'
+SAVE = 'save'
+ACTIVITIE_START = 'a_start'
+ACTIVITIE_STOP = 'a_stop'
 
 # Path list
 SAVE_PATH = "data"
+CACHE_PATH = "cache"
 
 # Add or remove activity here
 ACTIVITIES = ["activity_1", "activity_2"]
@@ -29,6 +34,7 @@ ACTIVITIES = ["activity_1", "activity_2"]
 # Const
 SUB_DURATION = 2
 VIDEO_SPEED = 15  # ms
+CAMERA_SPEED = 33
 XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)
@@ -69,17 +75,20 @@ def get_time(sec, raw=False):
 
 
 def get_time_date(start=None, stop=None, raw=False):
-    delta = stop - start
-    delta = str(delta)
+    delta = str(stop - start)
     time = delta.split(":")
-    h = int(time[0])
-    m = int(time[1])
-    s = int(float(time[2].lstrip("0")))
-    ms = int((float(time[2].lstrip("0")) - s)*1000)
     if raw:
+        h = int(time[0])
+        m = int(time[1])
+        s = int(float(time[2].lstrip("0")))
+        ms = int((float(time[2].lstrip("0")) - s)*1000)
         return h, m, s, ms
     else:
-        f"{str(h).zfill(2)}:{str(m).zfill(2)}:{str(s).zfill(2)},{str(ms)}"
+        h = time[0]
+        m = time[1]
+        s = int(float(time[2].lstrip("0")))
+        ms = int((float(time[2].lstrip("0")) - s)*1000)
+        return f"{h.zfill(2)}:{m.zfill(2)}:{str(s).zfill(2)},{str(ms)}"
 
 
 def get_time_1(time, raw=True):

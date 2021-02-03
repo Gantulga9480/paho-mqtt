@@ -1,24 +1,17 @@
 import paho.mqtt.client as mqtt
-import time
 import argparse
 import numpy as np
 import pygame
 from app.utils import BROKER
+from app.utils import Color as c
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--sensor", type=int)
 args = parser.parse_args()
 
-SENSOR_MAX = 40
-SENSOR_MIN = 20
+SENSOR_MAX = 22
+SENSOR_MIN = 19
 SENSOR = args.sensor
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-GREEN = (0, 177, 0)
-BLUE = (0, 0, 255)
-YELLOW = (255, 255, 0)
 
 WIDTH = 400
 HEIGHT = 400
@@ -34,14 +27,14 @@ def draw_grid(data):
     for i in range(8):
         for j in range(8):
             num = float(data[i][j])
-            color = int(np.floor((num-SENSOR_MIN)/(SENSOR_MAX-SENSOR_MIN)*255))
+            color = int((num-SENSOR_MIN)/(SENSOR_MAX-SENSOR_MIN)*255)
             if color > 255:
                 color = 255
             if color < 0:
                 color = 0
-            pygame.draw.rect(win, (color, color/6, (255 - color)),
+            pygame.draw.rect(win, (color, 64, (255 - color)),
                              (VEL*j, VEL*i, SHAPE, SHAPE))
-            score = font.render(f"{num}", 1, WHITE)
+            score = font.render(f"{num}", 1, c.WHITE)
             win.blit(score, (VEL*j, VEL*i))
 
 
@@ -58,6 +51,7 @@ def on_message(client, userdata, message):
     msg = msg.replace("]", "")
     data = msg.split(",")
     data = np.reshape(np.array(data), (8, 8))
+    data = np.flip(data, axis=1)
     draw_grid(data)
     pygame.display.flip()
 

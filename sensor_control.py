@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import cv2
+import csv
 
-from pathlib import Path
 from datetime import datetime as dt
 from shutil import rmtree, move
 from pyk4a import PyK4A
@@ -40,9 +40,12 @@ class SensorControl(Tk):
 
         self.is_activity_started = False
         self.is_streaming = False
+        self.is_displaying = False
 
         self.frame_count = 0
         self.time_stamp_tmp = 0
+        self.depth_frame_tmp = 0
+        self.rgb_frame_tmp = 0
 
         self.activity = StringVar()
         self.sensor_ignore = BooleanVar()
@@ -55,14 +58,15 @@ class SensorControl(Tk):
         self.sound_client = PahoMqtt(BROKER, "SOUND", c_msg="sound")
         self.sound_client.loop_start()
         self.clients = list()
+        dis = 0
         for i, item in enumerate(SENSORS):
             if item[2]:
                 self.clients.append(PahoMqtt(BROKER, f"{item[1]}",
                                              c_msg=item[0]))
-                self.clients[i].subscribe(item[0])
-                self.clients[i].loop_start()
+                self.clients[i-dis].subscribe(item[0])
+                self.clients[i-dis].loop_start()
             else:
-                pass
+                dis += 1
 
         # Attributes ----------------------------------------------------------
         #######################################################################
@@ -180,6 +184,7 @@ class SensorControl(Tk):
         menubar = Menu(self)
         tool = Menu(menubar, tearoff=0)
         tool.add_command(label="Insert user info", command=self.user_info)
+        tool.add_command(label="Display kinect", command=self.disp_kinect)
         tool.add_checkbutton(label="Ignore sensor error",
                              onvalue=1, offvalue=0,
                              variable=self.sensor_ignore)
@@ -189,6 +194,7 @@ class SensorControl(Tk):
         tool.add_checkbutton(label="debug mode",
                              onvalue=1, offvalue=0,
                              variable=self.debug_mode)
+        tool.add_command(label="Close sensors", command=self.close)
         menubar.add_cascade(label="Tools", menu=tool)
         self.config(menu=menubar)
 
@@ -214,17 +220,25 @@ class SensorControl(Tk):
 
     def get_video(self):
         img = self.azure.get_capture()
-        time_stamp = img._color_timestamp_usec
+        time_stamp = img.color_timestamp_usec
         delta = time_stamp - self.time_stamp_tmp
         self.time_stamp_tmp = time_stamp
         if self.is_streaming:
+            print(delta)
             if np.any(img.color):
-                self.video_stream.append(img.color)
-                self.depth_stream.append(img.depth)
-                print(delta)
+                if delta < 33400:
+                    pass
+                else:
+                    print('stream dropping 33400')
+                    self.video_stream.append(self.rgb_frame_tmp)
+                    self.depth_stream.append(self.depth_frame_tmp)
+                self.depth_frame_tmp = img.depth
+                self.rgb_frame_tmp = img.color
+                self.video_stream.append(self.rgb_frame_tmp)
+                self.depth_stream.append(self.depth_frame_tmp)
             else:
                 print('stream dropping')
-        self.after(CAMERA_SPEED, self.get_video)
+        self.after(30, self.get_video)
 
     def stream_video(self):
         if self.is_streaming:
@@ -255,7 +269,7 @@ class SensorControl(Tk):
     def activity_start(self):
         label = self.activity.get()
         for client in self.clients:
-            client.label = f'{label}_start'
+            client.label = f'{label} start'
         self.activity_list.append(label)
         self.video_activity_time[0].append(self.frame_count)
         msg = f'{ACTIVITIE_START}-{label}'
@@ -272,7 +286,7 @@ class SensorControl(Tk):
     def activity_end(self):
         label = self.activity.get()
         for client in self.clients:
-            client.label = f'{label}_end'
+            client.label = f'{label} end'
         self.is_activity_started = False
         msg = f'{ACTIVITIE_STOP}-{label}'
         self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
@@ -283,7 +297,6 @@ class SensorControl(Tk):
         self.stream_reset_btn['state'] = DISABLED
         self.act_end_btn['state'] = DISABLED
         self.act_start_btn['state'] = NORMAL
-
         self.video_activity_time[1].append(self.frame_count)
 
     def stream_start(self):
@@ -297,7 +310,6 @@ class SensorControl(Tk):
                 else:
                     messagebox.showwarning("Sensor Error",
                                            f"{SENSOR_ERROR}-{i+1}")
-
         if sen_count == len(self.clients) and self.age is not 'User':
             if not self.clients[0].is_started:
                 self.start_sec = dt.today()
@@ -305,18 +317,14 @@ class SensorControl(Tk):
                 self.time = self.start_sec.strftime(TIME_FORMAT)
                 self.time_path = \
                     f"{SAVE_PATH}/{self.date}/{self.time}"
-                msg = f'{START}-{self.time_path}'
-                self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
-                self.sound_client.publish(topic='sound', msg=msg, qos=0)
                 os.makedirs(f'{CACHE_PATH}/{self.date}/{self.time}')
                 self.srt = open(f"{CACHE_PATH}/{self.date}/{self.time}/k3_rgb.srt", "w+")
-
                 self.rgb_out = cv2.VideoWriter(f"{CACHE_PATH}/{self.date}/{self.time}/k3_rgb.avi",
-                                               cv2.VideoWriter_fourcc(*'DIVX'),
-                                               FPS, AZURE_KINECT_RGB_SIZE)
+                                                cv2.VideoWriter_fourcc(*'DIVX'),
+                                                FPS, AZURE_KINECT_RGB_SIZE)
                 self.depth_out = cv2.VideoWriter(f"{CACHE_PATH}/{self.date}/{self.time}/k3_depth.avi",
-                                                 cv2.VideoWriter_fourcc(*'DIVX'),
-                                                 FPS, AZURE_KINECT_DEPTH_SIZE)
+                                                    cv2.VideoWriter_fourcc(*'DIVX'),
+                                                    FPS, AZURE_KINECT_DEPTH_SIZE)
                 self.is_streaming = True
                 for client in self.clients:
                     client.stream_init(f'{CACHE_PATH}/{self.date}/{self.time}')
@@ -324,7 +332,9 @@ class SensorControl(Tk):
                 self.is_streaming = True
                 for client in self.clients:
                     client.is_streaming = True
-
+            msg = f'{START}-{self.time_path}'
+            self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
+            self.sound_client.publish(topic='sound', msg=msg, qos=0)
             self.stream_start_btn['state'] = DISABLED
             self.stream_start_btn['text'] = "Resume stream"
             self.stream_stop_btn['state'] = NORMAL
@@ -394,6 +404,10 @@ class SensorControl(Tk):
         except FileExistsError:
             pass
         move(f'{CACHE_PATH}/{self.date}/{self.time}', f'{SAVE_PATH}/{self.date}')
+        usr_info = open(f'{SAVE_PATH}/{self.date}/{self.time}/user_info.csv', "w+", newline='')
+        writer = csv.writer(usr_info)
+        with usr_info:
+            writer.writerow([self.age, self.sex, self.height, self.weight])
         rmtree(f'{CACHE_PATH}/{self.date}')
         self.summary()
         self.stream_reset()
@@ -401,8 +415,8 @@ class SensorControl(Tk):
     def stream_reset(self, delete=False):
         try:
             msg = f'{RESET}-{self.time_path}'
-            self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
             self.sound_client.publish(topic='sound', msg=msg, qos=0)
+            self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
         except AttributeError:
             pass
         self.stream_start_btn['text'] = "Stream start"
@@ -435,7 +449,10 @@ class SensorControl(Tk):
                     os.remove(f'{CACHE_PATH}/{self.date}/{self.time}/sensor_{client.info}.csv')
                 rmtree(f'{CACHE_PATH}/{self.date}')
             except Exception as e:
-                print(str(e))
+                if self.debug_mode.get():
+                    print(str(e))
+                else:
+                    pass
 
     def summary(self):
         os.system("clear")
@@ -483,8 +500,24 @@ class SensorControl(Tk):
                 client.sensor_ready = False
             if client.death_counter > 8:
                 messagebox.showerror('ERROR', f'SENSOR {client.info} DEAD')
-                raise SensorDeathError(client.info)
         self.after(1000, self.set_state)
+
+    def disp_kinect(self):
+        if self.is_displaying:
+            self.is_displaying = False
+            msg = f'{STOP}-?'
+            self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
+            self.sound_client.publish(topic='sound', msg=msg, qos=0)
+        else:
+            self.is_displaying = True
+            msg = f'{PLAY}-?'
+            self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
+            self.sound_client.publish(topic='sound', msg=msg, qos=0)
+
+    def close(self):
+        msg = f'{QUIT}-?'
+        self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
+        self.sound_client.publish(topic='sound', msg=msg, qos=0)
 
 
 SensorControl()

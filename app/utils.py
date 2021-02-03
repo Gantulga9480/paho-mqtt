@@ -11,16 +11,16 @@ SENSORS = [["sensors/sensor1/data", 1, 1],
            ["sensors/sensor6/data", 6, 1],
            ["sensors/sensor7/data", 7, 1],
            ["sensors/sensor8/data", 8, 1],
-           ["sensors/sensor9/data", 9, 1]]
-
-KINECTS = [['kinect1', 1, 1],
-           ['kinect2', 2, 1]]
+           ["sensors/sensor9/data", 9, 1],
+           ["sensors/sensor10/data", 10, 1]]
 
 # Command list
 START = 'start'
 STOP = 'stop'
 RESET = 'reset'
 SAVE = 'save'
+PLAY = 'play'
+QUIT = 'quit'
 ACTIVITIE_START = 'a_start'
 ACTIVITIE_STOP = 'a_stop'
 
@@ -35,7 +35,6 @@ ACTIVITIES = ["activity_1", "activity_2"]
 SUB_DURATION = 2
 VIDEO_SPEED = 15  # ms
 CAMERA_SPEED = 33
-XBOX_KINECT_FRAME_SIZE = (640, 480)
 AZURE_KINECT_DEPTH_SIZE = (640, 576)
 AZURE_KINECT_RGB_SIZE = (1280, 720)
 FPS = 30
@@ -44,7 +43,7 @@ DATE_FORMAT = "%Y_%m_%d"
 DATE_TIME = "%Y_%m_%d_%H_%M_%S"
 
 # Message
-SENSOR_ERROR = "Sensor is not ready, check"
+SENSOR_ERROR = "Sensor is not ready, check log"
 
 
 class Color:
@@ -102,6 +101,18 @@ def get_time_1(time, raw=True):
         return h, m, s, ms
     else:
         return f"{str(h).zfill}"
+
+
+def read(path, mod):
+    f = open(path, mod)
+    a = f.read()
+    f.close()
+    return a
+
+
+def write(a):
+    f = open('app/usr/user_index.txt', 'w')
+    f.write(str(a))
 
 
 class SensorDeathError(Exception):

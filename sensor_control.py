@@ -7,17 +7,8 @@ from datetime import datetime as dt
 from shutil import rmtree, move
 from pyk4a import PyK4A
 
-from tkinter import Tk
-from tkinter import Label
-from tkinter import ttk
-from tkinter import messagebox
-from tkinter import StringVar
-from tkinter import BooleanVar
-from tkinter import LabelFrame
-from tkinter import Menu
-from tkinter import DISABLED
-from tkinter import LEFT
-from tkinter import NORMAL
+from tkinter import Tk, Label, ttk, messagebox, StringVar, BooleanVar
+from tkinter import LabelFrame, Menu, DISABLED, NORMAL, LEFT
 
 from app.user_info import UserInfo
 from app.paho_mqtt import PahoMqtt
@@ -272,7 +263,7 @@ class SensorControl(Tk):
             client.label = f'{label} start'
         self.activity_list.append(label)
         self.video_activity_time[0].append(self.frame_count)
-        msg = f'{ACTIVITIE_START}-{label}'
+        msg = f'{ACTIVITIE_START}-{label} start'
         self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
         self.sound_client.publish(topic='sound', msg=msg, qos=0)
         self.is_activity_started = True
@@ -288,7 +279,7 @@ class SensorControl(Tk):
         for client in self.clients:
             client.label = f'{label} end'
         self.is_activity_started = False
-        msg = f'{ACTIVITIE_STOP}-{label}'
+        msg = f'{ACTIVITIE_STOP}-{label} end'
         self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
         self.sound_client.publish(topic='sound', msg=msg, qos=0)
         self.stream_stop_btn['state'] = NORMAL

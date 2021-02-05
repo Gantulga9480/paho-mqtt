@@ -311,11 +311,11 @@ class SensorControl(Tk):
                 os.makedirs(f'{CACHE_PATH}/{self.date}/{self.time}')
                 self.srt = open(f"{CACHE_PATH}/{self.date}/{self.time}/k3_rgb.srt", "w+")
                 self.rgb_out = cv2.VideoWriter(f"{CACHE_PATH}/{self.date}/{self.time}/k3_rgb.avi",
-                                                cv2.VideoWriter_fourcc(*'DIVX'),
-                                                FPS, AZURE_KINECT_RGB_SIZE)
+                                               cv2.VideoWriter_fourcc(*'DIVX'),
+                                               FPS, AZURE_KINECT_RGB_SIZE)
                 self.depth_out = cv2.VideoWriter(f"{CACHE_PATH}/{self.date}/{self.time}/k3_depth.avi",
-                                                    cv2.VideoWriter_fourcc(*'DIVX'),
-                                                    FPS, AZURE_KINECT_DEPTH_SIZE)
+                                                 cv2.VideoWriter_fourcc(*'DIVX'),
+                                                 FPS, AZURE_KINECT_DEPTH_SIZE)
                 self.is_streaming = True
                 for client in self.clients:
                     client.stream_init(f'{CACHE_PATH}/{self.date}/{self.time}')

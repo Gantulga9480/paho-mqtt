@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-s", "--sensor", type=int)
 args = parser.parse_args()
 
-SENSOR_MAX = 22
+SENSOR_MAX = 23
 SENSOR_MIN = 19
 SENSOR = args.sensor
 

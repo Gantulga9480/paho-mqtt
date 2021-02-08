@@ -10,9 +10,9 @@ SENSORS = [["sensors/sensor1/data", 1, 1],
            ["sensors/sensor5/data", 5, 1],
            ["sensors/sensor6/data", 6, 1],
            ["sensors/sensor7/data", 7, 1],
-           ["sensors/sensor8/data", 8, 1],
+           ["sensors/sensor8/data", 10, 0],
            ["sensors/sensor9/data", 9, 1],
-           ["sensors/sensor10/data", 10, 1]]
+           ["sensors/sensor10/data", 8, 1]]
 
 # Command list
 START = 'start'
@@ -29,7 +29,12 @@ SAVE_PATH = "data"
 CACHE_PATH = "cache"
 
 # Add or remove activity here
-ACTIVITIES = ["activity_1", "activity_2"]
+ACTIVITIES = ["Dressing", "Having rest", "Watching TV", 'Reading',
+              'Working computer', 'Standing',
+              'Exercising', 'Walking in room',
+              'Meal preparation', 'Eating', 'Wash dishes',
+              'Clean room', 'Sleeping', 'Falling',
+              'Respiration', 'Enter room', 'Talk to phone']
 
 # Const
 SUB_DURATION = 2

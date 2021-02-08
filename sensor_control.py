@@ -215,7 +215,8 @@ class SensorControl(Tk):
         delta = time_stamp - self.time_stamp_tmp
         self.time_stamp_tmp = time_stamp
         if self.is_streaming:
-            print(delta)
+            self.frame_count += 1
+            print(self.frame_count)
             if np.any(img.color):
                 if delta < 33400:
                     pass
@@ -234,7 +235,6 @@ class SensorControl(Tk):
     def stream_video(self):
         if self.is_streaming:
             if self.video_stream.__len__() > 0:
-                self.frame_count += 1
                 img_color = self.video_stream.pop(0)
                 img_color = img_color[:, :, 2::-1].astype(np.uint8)
                 img_color = img_color[:, :, 2::-1]
@@ -341,13 +341,13 @@ class SensorControl(Tk):
 
     def stream_stop(self, send=True):
         self.is_streaming = False
-        for client in self.clients:
-            client.is_streaming = False
         if send:
-            self.stop_sec = dt.today()
             msg = f'{STOP}-?'
             self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
             self.sound_client.publish(topic='sound', msg=msg, qos=0)
+            self.stop_sec = dt.today()
+        for client in self.clients:
+            client.is_streaming = False
         self.stream_stop_btn['state'] = DISABLED
         self.stream_start_btn['state'] = NORMAL
         self.stream_save_btn['state'] = NORMAL
@@ -360,8 +360,8 @@ class SensorControl(Tk):
         self.kinect_client.publish(topic='kinect', msg=msg, qos=0)
         self.sound_client.publish(topic='sound', msg=msg, qos=0)
         for index, label in enumerate(self.activity_list):
-            time_start = self.video_activity_time[0][index] * 33
-            time_stop = self.video_activity_time[1][index] * 33
+            time_start = round(self.video_activity_time[0][index] * 33.333)
+            time_stop = round(self.video_activity_time[1][index] * 33.333)
             s_h, s_m, s_s, ms = get_time_1(time_start)
             t_h, t_m, t_s, t_ms = get_time_1(time_stop)
             s_s_t = str((s_s + SUB_DURATION) % 60).zfill(2)
@@ -398,7 +398,7 @@ class SensorControl(Tk):
         usr_info = open(f'{SAVE_PATH}/{self.date}/{self.time}/user_info.csv', "w+", newline='')
         writer = csv.writer(usr_info)
         with usr_info:
-            writer.writerow([self.age, self.sex, self.height, self.weight])
+            writer.writerow([self.age,self.sex,self.height,self.weight])
         rmtree(f'{CACHE_PATH}/{self.date}')
         self.summary()
         self.stream_reset()
@@ -417,10 +417,11 @@ class SensorControl(Tk):
         self.stream_start_btn['state'] = NORMAL
         self.act_start_btn['state'] = DISABLED
         self.act_start_btn['state'] = DISABLED
-        self.video_stream = list()
-        self.depth_stream = list()
-        self.activity_list = list()
+        self.video_stream = []
+        self.depth_stream = []
+        self.activity_list = []
         self.video_activity_time = [[], []]
+        self.frame_count = 0
 
         for client in self.clients:
             client.is_started = False

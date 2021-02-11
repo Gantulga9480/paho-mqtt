@@ -210,7 +210,10 @@ class SensorControl(Tk):
         #######################################################################
 
     def get_video(self):
-        img = self.azure.get_capture()
+        try:
+            img = self.azure.get_capture()
+        except Exception:
+            quit()
         time_stamp = img.color_timestamp_usec
         delta = time_stamp - self.time_stamp_tmp
         self.time_stamp_tmp = time_stamp

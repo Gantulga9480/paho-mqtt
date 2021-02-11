@@ -28,13 +28,64 @@ ACTIVITIE_STOP = 'a_stop'
 SAVE_PATH = "data"
 CACHE_PATH = "cache"
 
-# Add or remove activity here
-ACTIVITIES = ["Dressing", "Having rest", "Watching TV", 'Reading',
-              'Working computer', 'Standing',
-              'Exercising', 'Walking in room',
-              'Meal preparation', 'Eating', 'Wash dishes',
-              'Clean room', 'Sleeping', 'Falling',
-              'Respiration', 'Enter room', 'Talk to phone']
+
+# Add or remove activity here 
+# A list
+#ACTIVITIES = ["Dressing",#
+    #           "Having rest",
+    #          "Watching TV",
+    #          'Reading',
+    #          'Working computer',
+    #          'Standing',
+    #          'Exercising',
+    #          'Walking in room',
+    #          'Meal preparation',
+    #          'Eating',
+    #          'Wash dishes',
+    #          'Clean room',
+    #          'Sleeping',
+    #          'Falling',
+    # #         'Respiration',
+    #          'Enter room',
+    #          'Talk to phone']
+
+# B list
+#ACTIVITIES = ['Enter room',
+   #           "Dressing",
+   #            "Having rest",
+   #            'Working computer',
+   #            'Reading',
+   #            "Watching TV",
+   #           'Standing',
+   #           'Exercising',
+   #           'Respiration',
+   #           'Walking in room',
+   #            'Meal preparation',
+   #            'Eating',
+   #            'Wash dishes',
+   #            'Clean room',
+   #            'Sleeping',
+   #            'Falling',
+   #            'Talk to phone']
+
+# C list           
+ACTIVITIES = ["Dressing",
+               "Watching TV",
+              "Having rest",
+               'Meal preparation',
+               'Eating',
+               'Wash dishes',
+               'Exercising',
+               'Enter room',
+               'Walking in room',
+               'Standing',
+               'Reading',
+               'Clean room',
+               'Working computer',
+               'Sleeping',
+               'Respiration',
+               'Talk to phone',
+               'Falling',]
 
 # Const
 SUB_DURATION = 2

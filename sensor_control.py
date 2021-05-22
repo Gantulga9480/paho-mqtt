@@ -340,7 +340,7 @@ class SensorControl(Tk):
             messagebox.showerror('ERROR', f'Insert user info or check sensors')
             self.is_streaming = False
             self.stream_stop(send=False)
-            self.stream_reset(delete=True)
+            # self.stream_reset(delete=True)
 
     def stream_stop(self, send=True):
         self.is_streaming = False

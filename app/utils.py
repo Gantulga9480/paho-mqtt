@@ -31,64 +31,83 @@ CACHE_PATH = "cache"
 
 # Add or remove activity here 
 # A list
-#ACTIVITIES = ["Dressing",#
-    #           "Having rest",
-    #          "Watching TV",
-    #          'Reading',
-    #          'Working computer',
-    #          'Standing',
-    #          'Exercising',
-    #          'Walking in room',
-    #          'Meal preparation',
-    #          'Eating',
-    #          'Wash dishes',
-    #          'Clean room',
-    #          'Sleeping',
-    #          'Falling',
-    # #         'Respiration',
-    #          'Enter room',
-    #          'Talk to phone']
+#ACTIVITIES = ["Dressing",
+#              "Watching TV",
+#              'Reading',
+#              'Working computer',
+#              'Standing',
+#              'Exercising',
+#              'Walking in room',
+#              'Meal preparation',
+#              'Eating',
+#              'Wash dishes',
+#              'Clean room',
+#              'Sleeping',
+#              'Falling',
+#              'Respiration',
+#              'Enter room',
+#              'Talk to phone']
 
 # B list
 #ACTIVITIES = ['Enter room',
-   #           "Dressing",
-   #            "Having rest",
-   #            'Working computer',
-   #            'Reading',
-   #            "Watching TV",
-   #           'Standing',
-   #           'Exercising',
-   #           'Respiration',
-   #           'Walking in room',
-   #            'Meal preparation',
-   #            'Eating',
-   #            'Wash dishes',
-   #            'Clean room',
-   #            'Sleeping',
-   #            'Falling',
-   #            'Talk to phone']
+#              "Dressing",
+#               "Having rest",
+#               'Working computer',
+#               'Reading',
+#               "Watching TV",
+#               'Standing',
+#              'Exercising',
+#              'Respiration',
+#              'Walking in room',
+#               'Meal preparation',
+#               'Eating',
+#               'Wash dishes',
+#               'Clean room',
+#               'Sleeping',
+#               'Falling',
+#               'Talk to phone']
 
 # C list           
+#ACTIVITIES = ["Dressing",
+#              "Watching TV",
+#              "Having rest",
+#               'Meal preparation',
+#               'Eating',
+#               'Wash dishes',
+#               'Exercising',
+#               'Enter room',
+#               'Walking in room',
+#               'Standing',
+#               'Reading',
+#               'Clean room',
+#               'Working computer',
+#               'Sleeping',
+#               'Respiration',
+#               'Talk to phone',
+#               'Falling']
+
+# D list
 ACTIVITIES = ["Dressing",
+               'Clean room',
                "Watching TV",
-              "Having rest",
                'Meal preparation',
                'Eating',
                'Wash dishes',
-               'Exercising',
-               'Enter room',
-               'Walking in room',
+              'Walking in room',
+              'Exercising',
                'Standing',
-               'Reading',
-               'Clean room',
+               "Having rest",
                'Working computer',
+               'Reading',
+              'Enter room',
                'Sleeping',
-               'Respiration',
+              'Respiration',
                'Talk to phone',
-               'Falling',]
+               'Falling']
+
 
 # Const
-SUB_DURATION = 2
+SUB_DURATION = 2  # sec
 VIDEO_SPEED = 15  # ms
 CAMERA_SPEED = 33
 AZURE_KINECT_DEPTH_SIZE = (640, 576)

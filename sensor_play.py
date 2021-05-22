@@ -11,15 +11,15 @@ from app.utils import Color as c
 
 
 SENSORS = ['sensor_1', 'sensor_2', 'sensor_3', 'sensor_4', 'sensor_5',
-           'sensor_6']
-SHAPE = 40
-WIDTH = SHAPE*24
-HEIGHT = SHAPE*16
+           'sensor_6', 'sensor_7', 'sensor_8', 'sensor_9']
+SHAPE = 20
+WIDTH = SHAPE*32
+HEIGHT = SHAPE*32
 FPS = 60
 XY = [8, 8]
 
-POSITION = [[SHAPE*16, SHAPE*8], [SHAPE*16, 0], [SHAPE*8, SHAPE*8],
-            [SHAPE*8, 0], [0, SHAPE*8], [0, 0]]
+POSITION = [[320, 320], [320, 160], [160, 320],
+            [160, 160], [0, 320], [0, 160], [480, 480], [80, 0], [240, 0]]
 SENSOR_MAX = 23
 SENSOR_MIN = 19
 
@@ -36,7 +36,7 @@ class SensorData:
         self.frame = None
         self.time_stamp = []
         self.run = True
-        self.id = id
+        self.id = id.split('_')[1]
 
     def load(self):
         self.data.clear()
@@ -70,7 +70,10 @@ class SensorData:
             else:
                 break
             self.frame = frame
-            test.delayMicroseconds((self.time_stamp[i]-0.01)*10**6)
+            label = frame[1]
+            if label != '0':
+                print(label)
+            test.delayMicroseconds((self.time_stamp[i]-0.0145)*10**6)
 
 
 worker = []
@@ -88,7 +91,7 @@ pygame.init()
 clock = pygame.time.Clock()
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Sensor')
-font = pygame.font.SysFont("arial", 20)
+font = pygame.font.SysFont("arial", SHAPE)
 run = True
 
 
@@ -96,9 +99,6 @@ def draw(pos, sensor):
     pos = POSITION[pos]
     while run:
         data = sensor.frame[0]
-        label = sensor.frame[1]
-        if label != '0':
-            print(label)
         for i in range(XY[0]):
             if run:
                 pass
@@ -123,7 +123,7 @@ def draw(pos, sensor):
                 # win.blit(score, (SHAPE*j+pos[0], SHAPE*i+pos[1]))
                 lbl = font.render(sensor.id, 1, c.BLACK)
                 win.blit(lbl, (pos[0]+SHAPE*4, pos[1]+SHAPE*4))
-                pygame.display.flip()
+        pygame.display.flip()
 
 
 for i in range(len(SENSORS)):
